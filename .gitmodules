@@ -1,0 +1,3 @@
+[submodule "ext/Helios_scalable_QEC"]
+	path = ext/Helios_scalable_QEC
+	url = https://github.com/NamiLiy/Helios_scalable_QEC
