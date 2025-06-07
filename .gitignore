@@ -10,3 +10,6 @@ hs_err_pid*
 .bsp/
 .metals/
 .idea/
+
+# Generated Verilog
+**/*.v
