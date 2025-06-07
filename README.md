@@ -1,6 +1,6 @@
 # SpinalHelios
 
-Reimplementation of "Helios" quantum error correction in SpinalHDL.
+Reimplementation of ["Helios" quantum error correction](https://github.com/NamiLiy/Helios_scalable_QEC) in SpinalHDL.
 
 Usage:
 * `./mill Helios.test`: run all tests
@@ -12,14 +12,22 @@ This is tested on Ubuntu, and will probably work for any reasonable Linux.
 Should be straightforward to adapt for other operating systems as well.
 
 Requires a reasonably recent version of JVM (so, JDK or runtime) and Verilator.
-Specifically, Scala or Mill is not required.
-The `./mill` wrapper script takes care of that.
+In particular, Scala or Mill is not required;
+the `./mill` wrapper script takes care of that.
 
-## Departures from the Original Verilog Version
+## Comparisons with the Original Verilog Version
 
-The goal of this implementation is to match the original verilog version,
-not only in input-output behavior, but ideally "down to the netlist".
-This is so that the desirable benchmarks are all preserved.
-If we must make adjustments however, we list and justify them below.
-* We use SpinalHDL's `StreamFIFO`, instead of implementing one from scratch.
-* Similarly, we use SpinalHDL's serializer (or whatever it is that combines streams?)
+In an ideal world, this implementation would match the original verilog,
+not only in input-output behavior, but "down to the netlist".
+The desirable benchmarks would then be preserved.
+
+Instead of that, we list and justify our adjustments below.
+
+### Tree Compare Solver
+
+Many signals are turned into `Flow`s and `Vec`s accordingly.
+Many `CHANNEL_COUNT` parameters are now hard-coded.
+
+###  Controller
+
+`StreamFIFO` and serializer parts scrapped
