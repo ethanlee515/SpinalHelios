@@ -18,15 +18,87 @@ class NeighborLinkInternal(
   val is_boundary = out Bool()
   val a_is_error = in Bool()
   val b_is_error = in Bool()
-  val is_error = out Reg(Bool())
+  val is_error = out port Reg(Bool()) init(False)
   val a_input_data = in Bits(exposed_data_size bits)
   val b_input_data = in Bits(exposed_data_size bits)
   val a_output_data = out Bits(exposed_data_size bits)
   val b_output_data = out Bits(exposed_data_size bits)
   val weight_in = in UInt(link_bit_width bits)
   val boundary_condition_in = in port BoundaryCondition()
-  val is_error_systolic_in = in Bool()
-  val weight_out = out reg(UInt(link_bit_width bits))
-  val boundary_condition_out = out port reg(BoundaryCondition())
+  val is_error_systolic = in Bool()
+  val weight_out = out port Reg(UInt(link_bit_width bits)) init(0)
+  val boundary_condition_out = out port Reg(BoundaryCondition()) init(
+    BoundaryCondition.no_boundary)
+  /* states */
+  val growth = Reg(UInt(link_bit_width bits)) init(0)
   /* logic */
+  // compute growth
+  val s = UInt(link_bit_width + 1 bits)
+  switch(boundary_condition_out) {
+    is(BoundaryCondition.no_boundary) {
+      s := (growth +^ U(a_increase)) + U(b_increase)
+    }
+    is(BoundaryCondition.a_boundary) {
+      s := growth +^ U(a_increase)
+    }
+    default {
+      s := 0
+    }
+  }
+  when(global_stage === Stage.measurement_loading) {
+    growth := 0
+  } otherwise {
+    when(s > weight_out) {
+      growth := weight_out
+    } otherwise {
+      growth := s.resized
+    }
+  }
+  // compute is_error
+  switch(boundary_condition_out) {
+    is(BoundaryCondition.no_boundary) {
+      switch(global_stage) {
+        is(Stage.measurement_loading) {
+          is_error := False
+        }
+        is(Stage.result_valid) {
+          is_error := is_error_systolic
+        }
+        default {
+          is_error := a_is_error || b_is_error
+        }
+      }
+    }
+    is(BoundaryCondition.a_boundary) {
+      switch(global_stage) {
+        is(Stage.measurement_loading) {
+          is_error := False
+        }
+        is(Stage.result_valid) {
+          is_error := is_error_systolic
+        }
+        default {
+          is_error := a_is_error
+        }
+      }
+    }
+    default {
+      is_error := False
+    }
+  }
+  fully_grown := growth >= weight_out
+  is_boundary := (boundary_condition_out === BoundaryCondition.a_boundary) &&
+    fully_grown
+  a_output_data := (boundary_condition_out === BoundaryCondition.no_boundary) ?
+    b_input_data | 0
+  b_output_data := (boundary_condition_out === BoundaryCondition.no_boundary) ?
+    a_input_data | 0
+  when(global_stage === Stage.parameters_loading) {
+    weight_out := weight_in
+    boundary_condition_out := boundary_condition_in
+  }
+}
+
+object NeighborLinkVerilog extends App {
+  SpinalVerilog(new NeighborLinkInternal())
 }
