@@ -5,10 +5,6 @@ object Stage extends SpinalEnum {
     parameters_loading, measurement_preparing = newElement()
 }
 
-object Header extends SpinalEnum {
-  val start_decoding_message, measurement_data_header = newElement()
-}
-
 object BoundaryCondition extends SpinalEnum {
   val no_boundary, a_boundary, non_existent_edge, connected_to_a_FIFO =
     newElement()
