@@ -35,10 +35,9 @@ class UnifiedController(
   val input = slave Stream(Bits(8 bits))
   val input_ready = Reg(Bool()) init(False)
   input.ready := input_ready
-  // This corresponds to `output_fifo_valid`
+  // This actually corresponds to `output_fifo_valid`
   // FIFO and serializer scrapped, and payload is redundant.
   val output_valid = out port Reg(Bool()) init(False)
-  val result_valid = Reg(Bool()) init(False) // TODO what is this? 
   val iteration_counter = Reg(UInt(iteration_counter_width bits))
   val cycle_counter = Reg(UInt(32 bits)) init(0)
   val busy = Reg(Bool())
@@ -67,12 +66,10 @@ class UnifiedController(
         when(input.payload === start_decoding_message) {
           global_stage := Stage.parameters_loading
           delay_counter := 0
-          result_valid := False
         }
         when(input.payload === measurement_data_header){
           global_stage := Stage.measurement_preparing
           delay_counter := 0
-          result_valid := False
           measurement_rounds := 0
         }
       }
@@ -107,7 +104,6 @@ class UnifiedController(
       global_stage := (measurement_rounds < grid_width_u) ?
         Stage.measurement_preparing | Stage.grow
       delay_counter := 0
-      result_valid := False
     }
     is(Stage.grow) {
       global_stage := Stage.merge
@@ -140,7 +136,6 @@ class UnifiedController(
         global_stage := Stage.idle
       }
       delay_counter := 0
-      result_valid := True
     }
   }
   output_valid := (global_stage === Stage.result_valid)
