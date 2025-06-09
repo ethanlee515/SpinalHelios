@@ -95,9 +95,9 @@ class MinValLess8xWithIndex(
   /* IO */
   val values = in port Vec.fill(num_channels)(Flow(UInt(width bits)))
   val result = out UInt(width bits)
-  val output_valids = out Bits(num_channels bits)
+  val valids = out Bits(num_channels bits)
   /* logic */
-  val comp = new MinVal8xWithIndex()
+  val comp = new MinVal8xWithIndex(width)
   for(i <- 0 until 8) {
     if(i < num_channels) {
       comp.vals(i) := values(i)
@@ -107,6 +107,6 @@ class MinValLess8xWithIndex(
   }
   result := comp.min_val
   for(i <- 0 until num_channels) {
-    output_valids(i) := comp.min_valid(i)
+    valids(i) := comp.min_valid(i)
   }
 }
