@@ -73,21 +73,44 @@ class DecodingGraph (
   val weight_ns = 2
   val weight_ew = 2
   val weight_ud = 2
-  def neighbor_link_internal_0(
+  def neighbor_link_0(
     ai: Int, aj: Int, ak: Int,
     bi: Int, bj: Int, bk: Int,
     adir: NeighborID, bdir: NeighborID) = {
-    val neighbor_link = new NeighborLink(address_width, max_weight)
-    neighbor_link.global_stage := global_stage
-    neighbor_link.a_increase := processing_unit(ak)(ai)(aj).neighbor_increase
-    neighbor_link.b_increase := processing_unit(bk)(bi)(bj).neighbor_increase
-    neighbor_link.a_is_error :=
-      processing_unit(ak)(ai)(aj).neighbor_is_error(adir.id)
-    neighbor_link.b_is_error :=
-      processing_unit(bk)(bi)(bj).neighbor_is_error(bdir.id)
-    neighbor_link.a_input_data := processing_unit(ak)(ai)(aj).to_neighbor(adir.id)
-    // TODO hm?
+    val link = new NeighborLink(address_width, max_weight)
+    val unit_a = processing_unit(ak)(ai)(aj)
+    val unit_b = processing_unit(bk)(bi)(bj)
+    link.global_stage := global_stage
+    link.a_increase := unit_a.neighbor_increase
+    link.b_increase := unit_b.neighbor_increase
+    link.a_is_error := unit_a.neighbor_is_error(adir.id)
+    link.b_is_error := unit_b.neighbor_is_error(bdir.id)
+    link.a_input_data := unit_a.to_neighbor(adir.id)
+    link.b_input_data := unit_b.to_neighbor(bdir.id)
+    unit_a.from_neighbor(adir.id) := link.a_output_data
+    unit_b.from_neighbor(bdir.id) := link.b_output_data
+    link.boundary_condition_in := BoundaryCondition.no_boundary
+    unit_a.neighbor_fully_grown(adir.id) := link.fully_grown
+    unit_b.neighbor_fully_grown(bdir.id) := link.fully_grown
+    unit_a.neighbor_is_boundary(adir.id) := link.is_boundary
+    unit_b.neighbor_is_boundary(bdir.id) := link.is_boundary
+    link
   }
+  def neighbor_link_single(i: Int, j: Int, k: Int, dir: NeighborID,
+    boundary_condition: BoundaryCondition.E) = {
+    val link = new NeighborLink(address_width, max_weight)
+    val unit = processing_unit(k)(i)(j)
+    link.global_stage := global_stage
+    unit.neighbor_fully_grown(dir.id) := link.fully_grown
+    link.a_increase := unit.neighbor_increase
+    unit.neighbor_is_boundary(dir.id) := link.is_boundary
+    link.a_is_error := unit.neighbor_is_error(dir.id)
+    link.a_input_data := unit.to_neighbor(dir.id)
+    unit.from_neighbor(dir.id) := link.a_output_data
+    link.boundary_condition_in := boundary_condition
+    link
+  }
+  // TODO
 }
   
 object DecodingGraphVerilog extends App {

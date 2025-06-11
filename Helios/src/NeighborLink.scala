@@ -24,6 +24,9 @@ class NeighborLink(
   val a_output_data = out port NeighborsCommunication(address_width)
   val b_output_data = out port NeighborsCommunication(address_width)
   val weight_in = in UInt(link_bit_width bits)
+  // TODO why is this an input wire?
+  // Topology doesn't change during runtime, right?
+  // Why not just a parameter then?
   val boundary_condition_in = in port BoundaryCondition()
   val is_error_systolic = in Bool()
   val weight_out = out port Reg(UInt(link_bit_width bits)) init(0)
