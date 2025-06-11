@@ -3,29 +3,6 @@
 import spinal.core._
 import spinal.lib._
 
-case class InputData(address_width: Int) extends Bundle {
-  // unpacking `input_data`
-  val neighbor_root = UInt(address_width bits)
-  val neighbor_parent_vector = Bool()
-  val parent_odd = Bool()
-  val child_cluster_parity = Bool()
-  val child_touching_boundary = Bool()
-  val child_peeling_complete = Bool()
-  val child_peeling_m = Bool()
-  val parent_peeling_parity_completed = Bool()
-}
-
-case class OutputData(address_width: Int) extends Bundle {
-  val root = UInt(address_width bits)
-  val parent_vector = Bool()
-  val odd_to_children = Bool()
-  val cluster_parity = Bool()
-  val cluster_touching_boundary = Bool()
-  val peeling_complete = Bool()
-  val peeling_m = Bool()
-  val peeling_parity_completed = Bool()
-}
-
 class ProcessingUnit(
   address_width: Int = 6,
   neighbor_count: Int = 6,
@@ -39,25 +16,26 @@ class ProcessingUnit(
   val neighbor_increase = out Bool()
   val neighbor_is_boundary = in Bits(neighbor_count bits)
   val neighbor_is_error = out Bits(neighbor_count bits)
-  val input_data = in port Vec.fill(neighbor_count)(InputData(address_width))
-  val output_data = out port Vec.fill(neighbor_count)(OutputData(address_width))
+  val from_neighbor =
+    in port Vec.fill(neighbor_count)(NeighborsCommunication(address_width))
+  val to_neighbor =
+    out port Vec.fill(neighbor_count)(NeighborsCommunication(address_width))
   val root = out port Reg(UInt(address_width bits))
   val odd = out port Reg(Bool())
   val busy = out port Reg(Bool()) init(False)
   /* logic */
   // unpacking `input_data`
-  val neighbor_root = Vec(input_data.map(_.neighbor_root))
-  val neighbor_parent_vector = Vec(input_data.map(
-    _.neighbor_parent_vector)).asBits
-  val parent_odd = Vec(input_data.map(_.parent_odd)).asBits
-  val child_cluster_parity = Vec(input_data.map(_.child_cluster_parity)).asBits
-  val child_touching_boundary = Vec(input_data.map(
-    _.child_touching_boundary)).asBits
-  val child_peeling_complete = Vec(input_data.map(
-    _.child_peeling_complete)).asBits
-  val child_peeling_m = Vec(input_data.map(_.child_peeling_m)).asBits
-  val parent_peeling_parity_completed = Vec(input_data.map(
-    _.parent_peeling_parity_completed)).asBits
+  val neighbor_root = Vec(from_neighbor.map(_.root))
+  val neighbor_parent_vector = Vec(from_neighbor.map(_.parent_vector)).asBits
+  val parent_odd = Vec(from_neighbor.map(_.odd)).asBits
+  val child_cluster_parity = Vec(from_neighbor.map(_.cluster_parity)).asBits
+  val child_touching_boundary =
+    Vec(from_neighbor.map(_.touching_boundary)).asBits
+  val child_peeling_complete =
+    Vec(from_neighbor.map(_.peeling_complete)).asBits
+  val child_peeling_m = Vec(from_neighbor.map(_.peeling_m)).asBits
+  val parent_peeling_parity_completed =
+    Vec(from_neighbor.map(_.peeling_parity_completed)).asBits
   // unpacking `output_data`
   // output looks like a wire, but it's in fact backed by these registers.
   val parent_vector = Reg(Bits(neighbor_count bits))
@@ -68,14 +46,14 @@ class ProcessingUnit(
   val peeling_m = Reg(Bool()) init(False)
   val peeling_parity_completed = Reg(Bool()) init(False)
   for(i <- 0 until neighbor_count) {
-    output_data(i).root := root
-    output_data(i).parent_vector := parent_vector(i)
-    output_data(i).odd_to_children := odd_to_children(i)
-    output_data(i).cluster_parity := cluster_parity
-    output_data(i).cluster_touching_boundary := cluster_touching_boundary
-    output_data(i).peeling_complete := peeling_complete
-    output_data(i).peeling_m := peeling_m
-    output_data(i).peeling_parity_completed := peeling_parity_completed
+    to_neighbor(i).root := root
+    to_neighbor(i).parent_vector := parent_vector(i)
+    to_neighbor(i).odd := odd_to_children(i)
+    to_neighbor(i).cluster_parity := cluster_parity
+    to_neighbor(i).touching_boundary := cluster_touching_boundary
+    to_neighbor(i).peeling_complete := peeling_complete
+    to_neighbor(i).peeling_m := peeling_m
+    to_neighbor(i).peeling_parity_completed := peeling_parity_completed
   }
   // book-keeping
   val stage = Reg(Stage()) init(Stage.idle)
