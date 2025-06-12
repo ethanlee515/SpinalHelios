@@ -9,7 +9,6 @@ class NeighborLink(
 ) extends Component {
   // `+ 1` to store from 0 to max_weight *inclusive*
   val link_bit_width = log2Up(max_weight + 1)
-//  val exposed_data_size = address_width + 1 + 1 + 1 + 1 + 3
   /* IO */
   val global_stage = in port Stage()
   val fully_grown = out Bool()
