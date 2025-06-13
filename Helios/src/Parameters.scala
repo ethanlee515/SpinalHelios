@@ -5,7 +5,7 @@ object Stage extends SpinalEnum {
     parameters_loading, measurement_preparing = newElement()
 }
 
-object BoundaryCondition extends SpinalEnum {
-  val no_boundary, a_boundary, non_existent_edge, connected_to_a_FIFO =
+object Boundary extends SpinalEnum {
+  val no_boundary, a_boundary, nexist_edge, connected_to_a_FIFO =
     newElement()
 }

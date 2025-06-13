@@ -15,6 +15,29 @@ object NeighborID extends Enumeration {
 
 import NeighborID._
 
+case class Correction(
+  grid_width_x: Int = 4,
+  grid_width_z: Int = 1,
+  grid_width_u: Int = 3,
+) extends Bundle {
+  // Some 0-th slots are unused and squashed
+  val ns_tail = Vec.fill(grid_width_x - 1)(Bits(grid_width_z bits))
+  val ew_tail = Vec.fill(grid_width_x - 1)(Bits(grid_width_z bits))
+  val ew_last = Bool()
+  val ud_tail = Vec.fill(grid_width_x)(Bits(grid_width_z bits))
+  // Dealing with 1-indexing correspondingly
+  def ns(i: Int, j: Int) = ns_tail(i - 1)(j - 1)
+  def ew(i: Int, j: Int) = {
+    if(j != grid_width_z) {
+      ew_tail(i - 1)(j)
+    } else {
+      assert(i == grid_width_x - 1)
+      ew_last
+    }
+  }
+  def ud(i: Int, j: Int) = ud_tail(i)(j)
+}
+
 class DecodingGraph (
   grid_width_x: Int = 4,
   grid_width_z: Int = 1, // is this ever not 1?
@@ -26,17 +49,6 @@ class DecodingGraph (
   val z_bit_width = log2Up(grid_width_z)
   val u_bit_width = log2Up(grid_width_u)
   val address_width = x_bit_width + z_bit_width + u_bit_width
-  val pu_count_per_round = grid_width_x * grid_width_z
-  val pu_count = pu_count_per_round * grid_width_u
-  // this is bonkers
-  /*
-  val ns_error_count_per_round = (grid_width_x - 1) * grid_width_z
-  // why is there a "+ 1" at the end of this?
-  val ew_error_count_per_round = (grid_width_x - 1) * grid_width_z + 1
-  val ud_error_count_per_round = grid_width_x * grid_width_z
-  val correction_count_per_round = ns_error_count_per_round +
-    ew_error_count_per_round + ud_error_count_per_round
-  */
   /* IO */
   val measurements = in port Vec.fill(grid_width_x)(Bits(grid_width_z bits)) 
   val global_stage = in port Stage()
@@ -45,18 +57,17 @@ class DecodingGraph (
   val odd_clusters = out port Bits(pu_count bits)
   val roots = out port Vec.fill(pu_count)(UInt(address_width bits))
   val busy = out port Vec.fill(pu_count)(Bool())
-  val ns_correction = out port Vec.fill(grid_width_x - 1)(
-    Bits(grid_width_z bits))
-  val ew_correction = out port Vec.fill(grid_width_x - 1)(
-    Bits(grid_width_z bits))
-  val ud_correction = out port Vec.fill(grid_width_x)(Bits(grid_width_z bits))
   */
+  val correction = out port Correction(grid_width_x, grid_width_z, grid_width_u)
   /* logic */
+  // Setting up grid of processing units
   val processing_unit = Seq.tabulate(grid_width_u, grid_width_x, grid_width_z) {
     (k, i, j) => {
-    // TODO missing params
-    val pu = new ProcessingUnit()
+    val address = (k << (x_bit_width + z_bit_width)) + (i << z_bit_width) + j
+    val neighbor_count = 6
+    val pu = new ProcessingUnit(address_width, neighbor_count, address)
     pu.global_stage := global_stage
+    // TODO populate output wires...
     pu
   }}
   for {
@@ -71,6 +82,7 @@ class DecodingGraph (
         processing_unit(k + 1)(i)(j).measurement_out
     }
   } 
+  // Setting up neighbors
   val weight_ns = 2
   val weight_ew = 2
   val weight_ud = 2
@@ -99,7 +111,7 @@ class DecodingGraph (
     unit_a.from_neighbor(adir.id) := link.a_output_data
     unit_b.from_neighbor(bdir.id) := link.b_output_data
     link.weight_in := weight_in
-    link.boundary_condition_in := BoundaryCondition.no_boundary
+    link.boundary_condition_in := Boundary.no_boundary
     link.is_error_systolic := is_error_systolic_in
     link
   }
@@ -108,16 +120,19 @@ class DecodingGraph (
     is_error_out: Bool,
     weight_in: UInt)(
     i: Int, j: Int, k: Int, dir: NeighborID,
-    boundary_condition: BoundaryCondition.E) = {
+    boundary_condition: Boundary.E) = {
     val link = new NeighborLink(address_width, max_weight)
     val unit = processing_unit(k)(i)(j)
     link.global_stage := global_stage
     unit.neighbor_fully_grown(dir.id) := link.fully_grown
     link.a_increase := unit.neighbor_increase
+    link.b_increase := False
     unit.neighbor_is_boundary(dir.id) := link.is_boundary
     link.a_is_error := unit.neighbor_is_error(dir.id)
+    link.b_is_error := False
     is_error_out := link.is_error
     link.a_input_data := unit.to_neighbor(dir.id)
+    link.b_input_data.assignFromBits(B(0, address_width + 7 bits))
     unit.from_neighbor(dir.id) := link.a_output_data
     link.weight_in := weight_in
     link.boundary_condition_in := boundary_condition
@@ -127,29 +142,144 @@ class DecodingGraph (
   val ns = Seq.tabulate(grid_width_u, grid_width_x + 1, grid_width_z + 1) { (k, i, j) => new Area {
     val is_error_systolic_in = Bool()
     val is_error_out = Bool()
-    val weight_in = UInt(address_width bits)
+    val weight_in = UInt(log2Up(max_weight) + 1 bits)
     val link_0 = neighbor_link_0(is_error_systolic_in, is_error_out, weight_in) _
     val link_single = neighbor_link_single(is_error_systolic_in, is_error_out, weight_in) _
     if (i == 0 && j < grid_width_z) {
       // "first row"
-      link_single(i, j, k, NeighborID.north, BoundaryCondition.non_existent_edge)
+      link_single(i, j, k, NeighborID.north, Boundary.nexist_edge)
     } else if(i == grid_width_x && j < grid_width_z) {
       link_single(i - 1, j, k,
-        NeighborID.south, BoundaryCondition.non_existent_edge)
+        NeighborID.south, Boundary.nexist_edge)
     } else if(i < grid_width_x && i > 0 && i % 2 == 1 && j > 0) {
       // "odd rows which are always internal"
       link_0(i - 1, j - 1, k, i, j - 1, k, NeighborID.south, NeighborID.north)
     } else if(i < grid_width_x && i > 0 && i % 2 == 0 && j == 0) {
       // "First element of even rows"
-      link_single(i, j, k, NeighborID.north, BoundaryCondition.non_existent_edge)
+      link_single(i, j, k, NeighborID.north, Boundary.nexist_edge)
     } else if(i < grid_width_x && i > 0 && i % 2 == 0 && j == grid_width_z) {
       // "Last element of even rows"
-      link_single(i - 1, j - 1, k, NeighborID.south, BoundaryCondition.a_boundary)
+      link_single(i - 1, j - 1, k, NeighborID.south, Boundary.a_boundary)
     } else if(i < grid_width_x && i > 0 && i % 2 == 0 && j > 0 && j < grid_width_z) {
       // "Middle element of even rows"
       link_0(i - 1, j - 1, k, i, j, k, NeighborID.south, NeighborID.north)
     }
   }}
+  val ew = Seq.tabulate(grid_width_u, grid_width_x + 1, grid_width_z + 1) { (k, i, j) => new Area {
+    val is_error_systolic_in = Bool()
+    val is_error_out = Bool()
+    val weight_in = U(weight_ew)
+    val link_0 = neighbor_link_0(is_error_systolic_in, is_error_out, weight_in) _
+    val link_single = neighbor_link_single(is_error_systolic_in, is_error_out, weight_in) _
+    if(i == 0 && j < grid_width_z) {
+      // "First row"
+      link_single(i, j, k, NeighborID.east, Boundary.nexist_edge)
+    } else if(i == grid_width_x && j < grid_width_z) {
+      // "Last row"
+      link_single(i - 1, j, k, NeighborID.west, Boundary.nexist_edge)
+    } else if(i < grid_width_x && i > 0 && i % 2 == 0 && j < grid_width_z) {
+      // "even rows which are always internal"
+      link_0(i, j, k, i - 1, j, k, NeighborID.east, NeighborID.west)
+    } else if(i < grid_width_x && i > 0 && i % 2 == 1 && j == 0) {
+      // "First element of odd rows"
+      link_single(i - 1, j, k, NeighborID.west, Boundary.a_boundary)
+    } else if(i < grid_width_x - 1 && i > 0 && i % 2 == 1 && j == grid_width_z) {
+      // "Last element of odd rows excluding last row"
+      link_single(i, j - 1, k, NeighborID.east, Boundary.nexist_edge)
+    } else if(i == grid_width_x - 1 && j == grid_width_z) {
+      // Last element of last odd row
+      link_single(i, j - 1, k, NeighborID.east, Boundary.a_boundary)
+    } else if(i < grid_width_x && i > 0 && i % 2 == 1 && j > 0 && j < grid_width_z) {
+      // Middle elements of odd rows
+      link_0(i, j - 1, k, i - 1, j, k, NeighborID.east, NeighborID.west)
+    }
+  }}
+  val ud = Seq.tabulate(grid_width_u + 1, grid_width_x, grid_width_z) {(k, i, j) => new Area {
+    val is_error_systolic_in = Bool()
+    val is_error_out = Bool()
+    val weight_in = U(weight_ud)
+    val link_0 = neighbor_link_0(is_error_systolic_in, is_error_out, weight_in) _
+    val link_single = neighbor_link_single(is_error_systolic_in, is_error_out, weight_in) _
+    if(k == 0) {
+      link_single(i, j, k, NeighborID.down, Boundary.a_boundary)
+    } else if(k == grid_width_u) {
+      link_single(i, j, k - 1, NeighborID.up, Boundary.nexist_edge)
+    } else if(k < grid_width_u) { // TODO isn't this always true now?
+      link_0(i, j, k - 1, i, j, k, NeighborID.up, NeighborID.down)
+    }
+  }}
+  // systolic error stuff
+  for(k <- 0 until (grid_width_u - 1);
+      i <- 0 to grid_width_x;
+      j <- 0 to grid_width_z) {
+    ns(k)(i)(j).is_error_systolic_in := ns(k + 1)(i)(j).is_error_out
+  }
+  for(k <- 0 until grid_width_u - 1;
+      i <- 0 to grid_width_x;
+      j <- 0 to grid_width_z) {
+    val conds = List(
+      // "even rows which are always internal"
+      i < grid_width_x && i > 0 && i % 2 == 0 && j < grid_width_z,
+      // "First element of odd rows"
+      i < grid_width_x && i > 0 && i % 2 == 1 && j == 0,
+      // "Last element of last odd row"
+      i == grid_width_x - 1 && j == grid_width_z,
+      // Middle elements of odd rows
+      i < grid_width_x && i > 0 && i%2 == 1 && j > 0 && j < grid_width_z)
+    if(conds.reduce(_ || _)) {
+      ew(k)(i)(j).is_error_systolic_in := ew(k + 1)(i)(j).is_error_out
+    }
+  }
+  for(k <- 0 until grid_width_u - 1;
+      i <- 0 until grid_width_x;
+      j <- 0 until grid_width_z) {
+    ud(k)(i)(j).is_error_systolic_in := ud(k + 1)(i)(j).is_error_out
+  }
+  // correction outputs
+  for(i <- 1 until grid_width_x;
+      j <- 1 to grid_width_z) {
+    correction.ns(i, j) := ns(0)(i)(j).is_error_out
+  }
+  for(i <- 1 until grid_width_x;
+      j <- 0 until grid_width_z) {
+    correction.ew(i, j) := ew(0)(i)(j).is_error_out
+  }
+  correction.ew(grid_width_x - 1, grid_width_z) :=
+    ew(0)(grid_width_x - 1)(grid_width_z).is_error_out
+  for(i <- 0 until grid_width_x;
+      j <- 0 until grid_width_z) {
+    correction.ud(i, j) := ud(0)(i)(j).is_error_out
+  }
+  // setting `weight_in`
+  for(k <- 0 until grid_width_u;
+      i <- 0 to grid_width_x;
+      j <- 0 to grid_width_z) {
+    if(i < grid_width_x && i > 0 && j > 0) {
+      ns(k)(i)(j).weight_in := weight_ns
+    } else {
+      ns(k)(i)(j).weight_in := 2
+    }
+  }
+  for(k <- 0 until grid_width_u;
+      i <- 0 to grid_width_x;
+      j <- 0 to grid_width_z) {
+    val conds = List(i < grid_width_x && i > 0 && j < grid_width_z,
+      i == grid_width_x - 1 && j == grid_width_z)
+    if(conds.reduce(_ || _)) {
+      ew(k)(i)(j).weight_in := weight_ew
+    } else {
+      ew(k)(i)(j).weight_in := 2
+    }
+  }
+  for(k <- 0 to grid_width_u;
+      i <- 0 until grid_width_x;
+      j <- 0 until grid_width_z) {
+    if(k < grid_width_u) {
+      ud(k)(i)(j).weight_in := weight_ud
+    } else {
+      ud(k)(i)(j).weight_in := 2
+    }
+  }
 }
   
 object DecodingGraphVerilog extends App {
