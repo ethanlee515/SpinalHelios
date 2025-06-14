@@ -3,6 +3,10 @@
 import spinal.core._
 import spinal.lib._
 
+object Command extends SpinalEnum {
+  val start_decoding, measurement_data = newElement()
+}
+
 class UnifiedController(
   grid_width_x: Int = 4,
   grid_width_z: Int = 1,
@@ -14,22 +18,21 @@ class UnifiedController(
   val z_bit_width = log2Up(grid_width_z)
   val u_bit_width = log2Up(grid_width_u)
   val address_width = x_bit_width + z_bit_width + u_bit_width
-  val bytes_per_round = (grid_width_x * grid_width_z + 7) >> 3
-  val aligned_pu_per_round = bytes_per_round << 3
   val pu_count_per_round = grid_width_x * grid_width_z
   val pu_count = pu_count_per_round * grid_width_u
-  val start_decoding_message = B(1, 8 bits)
-  val measurement_data_header = B(2, 8 bits)
   /* IO and states */
   val global_stage = out port Reg(Stage()) init(Stage.idle)
   val global_stage_previous = Reg(Stage()) init(Stage.idle)
   val odd_clusters_PE = in port Bits(pu_count bits)
   val busy_PE = in port Bits(pu_count bits)
-  val measurements = out port Reg(Bits(aligned_pu_per_round bits))
-  // rewriting as streams backed by registers
-  val input = slave Stream(Bits(8 bits))
-  val input_ready = Reg(Bool()) init(False)
-  input.ready := input_ready
+  val measurements = out port Reg(Vec.fill(grid_width_x)(Bits(grid_width_z bits)))
+  // rewriting input as streams backed by registers
+  val meas_in = slave Stream(Vec.fill(grid_width_x)(Bits(grid_width_z bits)))
+  val meas_in_ready = Reg(Bool()) init(False)
+  meas_in.ready := meas_in_ready
+  val command = slave Stream(Command())
+  val command_ready = Reg(Bool()) init(False)
+  command.ready := command_ready
   // This actually corresponds to `output_fifo_valid`
   // FIFO and serializer scrapped, and payload is redundant.
   val output_valid = out port Reg(Bool()) init(False)
@@ -38,8 +41,8 @@ class UnifiedController(
   val busy = Reg(Bool())
   val odd_clusters = Reg(Bool())
   /* logic */
-  input_ready := global_stage === Stage.idle ||
-    global_stage === Stage.measurement_preparing
+  command_ready := (global_stage === Stage.idle)
+  meas_in_ready := (global_stage === Stage.measurement_preparing)
   busy := busy_PE.orR
   odd_clusters := odd_clusters_PE.orR
   switch(global_stage) {
@@ -52,47 +55,32 @@ class UnifiedController(
   }
   global_stage_previous := global_stage
   val delay_counter = Reg(UInt(log2Up(max_delay + 1) bits)) init(0)
-  val messages_per_round_of_measurement = Reg(UInt(16 bits))
   val measurement_rounds = Reg(UInt(16 bits))
-
   switch(global_stage) {
     is(Stage.idle) {
-      when(input.valid && input_ready) {
-        when(input.payload === start_decoding_message) {
-          global_stage := Stage.parameters_loading
-          delay_counter := 0
-        }
-        when(input.payload === measurement_data_header){
-          global_stage := Stage.measurement_preparing
-          delay_counter := 0
-          measurement_rounds := 0
+      when(command.valid && command_ready) {
+        delay_counter := 0
+        switch(command.payload) {
+          is(Command.start_decoding) {
+            global_stage := Stage.parameters_loading
+          }
+          is(Command.measurement_data) {
+            global_stage := Stage.measurement_preparing
+            measurement_rounds := 0
+          }
         }
       }
     }
     is(Stage.parameters_loading) {
       global_stage := Stage.idle
-      messages_per_round_of_measurement := 0
       measurement_rounds := 0
     }
     is(Stage.measurement_preparing) {
-      when(input.valid && input_ready) {
-        val first_byte = (aligned_pu_per_round - 1 downto
-          aligned_pu_per_round - 8)
-        measurements(first_byte) := input.payload
-        if(aligned_pu_per_round > 8) {
-          val src = aligned_pu_per_round - 1 downto 8
-          val dest = aligned_pu_per_round - 9 downto 0
-          measurements(dest) := measurements(src)
-        }
-        messages_per_round_of_measurement :=
-          messages_per_round_of_measurement + 1
-        when((messages_per_round_of_measurement + 1) * 8 >=
-          pu_count_per_round) {
-          global_stage := Stage.measurement_loading
-          delay_counter := 0
-          messages_per_round_of_measurement := 0
-          measurement_rounds := measurement_rounds + 1
-        }
+      when(meas_in.valid && meas_in_ready) {
+        measurements := meas_in.payload
+        global_stage := Stage.measurement_loading
+        delay_counter := 0
+        measurement_rounds := measurement_rounds + 1
       }
     }
     is(Stage.measurement_loading) {
