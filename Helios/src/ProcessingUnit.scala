@@ -203,7 +203,3 @@ class ProcessingUnit(
     }
   }
 }
-
-object ProcUnitVerilog extends App {
-  SpinalVerilog(new ProcessingUnit())
-}

@@ -262,7 +262,3 @@ class DecodingGraph (
     correction.ud(i, j) := ud(0)(i)(j).is_error_out
   }
 }
-  
-object DecodingGraphVerilog extends App {
-  SpinalVerilog(new DecodingGraph())
-}

@@ -103,7 +103,3 @@ class NeighborLink(
     boundary_condition_out := boundary_condition_in
   }
 }
-
-object NeighborLinkVerilog extends App {
-  SpinalVerilog(new NeighborLink())
-}

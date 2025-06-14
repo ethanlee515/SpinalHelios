@@ -123,7 +123,3 @@ class UnifiedController(
   }
   output_valid := (global_stage === Stage.result_valid)
 }
-
-object ControllerVerilog extends App {
-  SpinalVerilog(new UnifiedController())
-}
