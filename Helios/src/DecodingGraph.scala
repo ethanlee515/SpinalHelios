@@ -52,12 +52,12 @@ class DecodingGraph (
   /* IO */
   val measurements = in port Vec.fill(grid_width_x)(Bits(grid_width_z bits)) 
   val global_stage = in port Stage()
-  // TODO Drive
-  /*
-  val odd_clusters = out port Bits(pu_count bits)
-  val roots = out port Vec.fill(pu_count)(UInt(address_width bits))
-  val busy = out port Vec.fill(pu_count)(Bool())
-  */
+  val odd_clusters = out port Vec.fill(grid_width_u)(
+    Vec.fill(grid_width_x)(Bits(grid_width_z bits)))
+  val roots = out port Vec.fill(grid_width_u)(
+    Vec.fill(grid_width_x)(Vec.fill(grid_width_z)(UInt(address_width bits))))  
+  val busy = out port Vec.fill(grid_width_u)(
+    Vec.fill(grid_width_x)(Bits(grid_width_z bits)))
   val correction = out port Correction(grid_width_x, grid_width_z, grid_width_u)
   /* logic */
   // Setting up grid of processing units
@@ -67,7 +67,9 @@ class DecodingGraph (
     val neighbor_count = 6
     val pu = new ProcessingUnit(address_width, neighbor_count, address)
     pu.global_stage := global_stage
-    // TODO populate output wires...
+    odd_clusters(k)(i)(j) := pu.odd
+    roots(k)(i)(j) := pu.root
+    busy(k)(i)(j) := pu.busy
     pu
   }}
   for {
@@ -142,7 +144,7 @@ class DecodingGraph (
   val ns = Seq.tabulate(grid_width_u, grid_width_x + 1, grid_width_z + 1) { (k, i, j) => new Area {
     val is_error_systolic_in = Bool()
     val is_error_out = Bool()
-    val weight_in = UInt(log2Up(max_weight) + 1 bits)
+    val weight_in = U(weight_ns)
     val link_0 = neighbor_link_0(is_error_systolic_in, is_error_out, weight_in) _
     val link_single = neighbor_link_single(is_error_systolic_in, is_error_out, weight_in) _
     if (i == 0 && j < grid_width_z) {
@@ -165,6 +167,15 @@ class DecodingGraph (
       link_0(i - 1, j - 1, k, i, j, k, NeighborID.south, NeighborID.north)
     }
   }}
+  for(k <- 0 until grid_width_u;
+      i <- 0 to grid_width_x;
+      j <- 0 to grid_width_z) {
+    if(k < grid_width_u - 1) {
+      ns(k)(i)(j).is_error_systolic_in := ns(k + 1)(i)(j).is_error_out
+    } else {
+      ns(k)(i)(j).is_error_systolic_in := False
+    }
+  }
   val ew = Seq.tabulate(grid_width_u, grid_width_x + 1, grid_width_z + 1) { (k, i, j) => new Area {
     val is_error_systolic_in = Bool()
     val is_error_out = Bool()
@@ -194,6 +205,24 @@ class DecodingGraph (
       link_0(i, j - 1, k, i - 1, j, k, NeighborID.east, NeighborID.west)
     }
   }}
+  for(k <- 0 until grid_width_u;
+      i <- 0 to grid_width_x;
+      j <- 0 to grid_width_z) {
+    val conds = List(
+      // "even rows which are always internal"
+      i < grid_width_x && i > 0 && i % 2 == 0 && j < grid_width_z,
+      // "First element of odd rows"
+      i < grid_width_x && i > 0 && i % 2 == 1 && j == 0,
+      // "Last element of last odd row"
+      i == grid_width_x - 1 && j == grid_width_z,
+      // Middle elements of odd rows
+      i < grid_width_x && i > 0 && i%2 == 1 && j > 0 && j < grid_width_z)
+    if(k < grid_width_u - 1 && conds.reduce(_ || _)) {
+      ew(k)(i)(j).is_error_systolic_in := ew(k + 1)(i)(j).is_error_out
+    } else {
+      ew(k)(i)(j).is_error_systolic_in := False
+    }
+  }
   val ud = Seq.tabulate(grid_width_u + 1, grid_width_x, grid_width_z) {(k, i, j) => new Area {
     val is_error_systolic_in = Bool()
     val is_error_out = Bool()
@@ -208,32 +237,14 @@ class DecodingGraph (
       link_0(i, j, k - 1, i, j, k, NeighborID.up, NeighborID.down)
     }
   }}
-  // systolic error stuff
-  for(k <- 0 until (grid_width_u - 1);
-      i <- 0 to grid_width_x;
-      j <- 0 to grid_width_z) {
-    ns(k)(i)(j).is_error_systolic_in := ns(k + 1)(i)(j).is_error_out
-  }
-  for(k <- 0 until grid_width_u - 1;
-      i <- 0 to grid_width_x;
-      j <- 0 to grid_width_z) {
-    val conds = List(
-      // "even rows which are always internal"
-      i < grid_width_x && i > 0 && i % 2 == 0 && j < grid_width_z,
-      // "First element of odd rows"
-      i < grid_width_x && i > 0 && i % 2 == 1 && j == 0,
-      // "Last element of last odd row"
-      i == grid_width_x - 1 && j == grid_width_z,
-      // Middle elements of odd rows
-      i < grid_width_x && i > 0 && i%2 == 1 && j > 0 && j < grid_width_z)
-    if(conds.reduce(_ || _)) {
-      ew(k)(i)(j).is_error_systolic_in := ew(k + 1)(i)(j).is_error_out
-    }
-  }
-  for(k <- 0 until grid_width_u - 1;
+  for(k <- 0 to grid_width_u;
       i <- 0 until grid_width_x;
       j <- 0 until grid_width_z) {
-    ud(k)(i)(j).is_error_systolic_in := ud(k + 1)(i)(j).is_error_out
+    if(k < grid_width_u - 1) {
+      ud(k)(i)(j).is_error_systolic_in := ud(k + 1)(i)(j).is_error_out
+    } else {
+      ud(k)(i)(j).is_error_systolic_in := False
+    }
   }
   // correction outputs
   for(i <- 1 until grid_width_x;
@@ -249,36 +260,6 @@ class DecodingGraph (
   for(i <- 0 until grid_width_x;
       j <- 0 until grid_width_z) {
     correction.ud(i, j) := ud(0)(i)(j).is_error_out
-  }
-  // setting `weight_in`
-  for(k <- 0 until grid_width_u;
-      i <- 0 to grid_width_x;
-      j <- 0 to grid_width_z) {
-    if(i < grid_width_x && i > 0 && j > 0) {
-      ns(k)(i)(j).weight_in := weight_ns
-    } else {
-      ns(k)(i)(j).weight_in := 2
-    }
-  }
-  for(k <- 0 until grid_width_u;
-      i <- 0 to grid_width_x;
-      j <- 0 to grid_width_z) {
-    val conds = List(i < grid_width_x && i > 0 && j < grid_width_z,
-      i == grid_width_x - 1 && j == grid_width_z)
-    if(conds.reduce(_ || _)) {
-      ew(k)(i)(j).weight_in := weight_ew
-    } else {
-      ew(k)(i)(j).weight_in := 2
-    }
-  }
-  for(k <- 0 to grid_width_u;
-      i <- 0 until grid_width_x;
-      j <- 0 until grid_width_z) {
-    if(k < grid_width_u) {
-      ud(k)(i)(j).weight_in := weight_ud
-    } else {
-      ud(k)(i)(j).weight_in := 2
-    }
   }
 }
   

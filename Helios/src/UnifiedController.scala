@@ -18,11 +18,6 @@ class UnifiedController(
   val aligned_pu_per_round = bytes_per_round << 3
   val pu_count_per_round = grid_width_x * grid_width_z
   val pu_count = pu_count_per_round * grid_width_u
-  val ns_error_count_per_round = (grid_width_x - 1) * grid_width_z
-  val ew_error_count_per_round = (grid_width_x - 1) * grid_width_z + 1
-  val ud_error_count_per_round = grid_width_x * grid_width_z
-  val correction_count_per_round = ns_error_count_per_round +
-    ew_error_count_per_round + ud_error_count_per_round
   val start_decoding_message = B(1, 8 bits)
   val measurement_data_header = B(2, 8 bits)
   /* IO and states */
