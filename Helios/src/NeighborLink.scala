@@ -2,11 +2,9 @@
 
 import spinal.core._
 import spinal.lib._
+import HeliosParams._
 
-class NeighborLink(
-  address_width: Int = 6,
-  max_weight: Int = 2
-) extends Component {
+class NeighborLink() extends Component {
   // `+ 1` to store from 0 to max_weight *inclusive*
   val link_bit_width = log2Up(max_weight + 1)
   /* IO */
@@ -18,10 +16,10 @@ class NeighborLink(
   val a_is_error = in Bool()
   val b_is_error = in Bool()
   val is_error = out port Reg(Bool()) init(False)
-  val a_input_data = in port NeighborsCommunication(address_width)
-  val b_input_data = in port NeighborsCommunication(address_width)
-  val a_output_data = out port NeighborsCommunication(address_width)
-  val b_output_data = out port NeighborsCommunication(address_width)
+  val a_input_data = in port NeighborsCommunication()
+  val b_input_data = in port NeighborsCommunication()
+  val a_output_data = out port NeighborsCommunication()
+  val b_output_data = out port NeighborsCommunication()
   val weight_in = in UInt(link_bit_width bits)
   // TODO why is this an input wire?
   // Topology doesn't change during runtime, right?

@@ -2,20 +2,14 @@
 
 import spinal.core._
 import spinal.lib._
+import HeliosParams._
 
-class HeliosCore (
-  grid_width_x: Int = 4,
-  grid_width_z: Int = 1, // is this ever not 1?
-  grid_width_u: Int = 3,
-  max_weight: Int = 2
-) extends Component {
+class HeliosCore () extends Component {
   val meas_in = slave Stream(Vec.fill(grid_width_x)(Bits(grid_width_z bits)))
   val command = slave Stream(Command())
-  val output =
-    out port Flow(Correction(grid_width_x, grid_width_z, grid_width_u))
-  val graph = new DecodingGraph(grid_width_x, grid_width_z, grid_width_u)
-  val controller =
-    new UnifiedController(grid_width_x, grid_width_z, grid_width_u, 8, 3)
+  val output = out port Flow(Correction())
+  val graph = new DecodingGraph()
+  val controller = new UnifiedController()
   controller.meas_in << meas_in
   controller.command << command
   graph.measurements := controller.measurements

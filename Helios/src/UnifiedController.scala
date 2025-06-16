@@ -2,24 +2,14 @@
 
 import spinal.core._
 import spinal.lib._
+import HeliosParams._
 
 object Command extends SpinalEnum {
   val start_decoding, measurement_data = newElement()
 }
 
-class UnifiedController(
-  grid_width_x: Int = 4,
-  grid_width_z: Int = 1,
-  grid_width_u: Int = 3,
-  iteration_counter_width: Int = 8,
-  max_delay: Int = 2
-) extends Component {
-  val x_bit_width = log2Up(grid_width_x)
-  val z_bit_width = log2Up(grid_width_z)
-  val u_bit_width = log2Up(grid_width_u)
-  val address_width = x_bit_width + z_bit_width + u_bit_width
-  val pu_count_per_round = grid_width_x * grid_width_z
-  val pu_count = pu_count_per_round * grid_width_u
+class UnifiedController() extends Component {
+  val pu_count = grid_width_x * grid_width_z * grid_width_u
   /* IO and states */
   val global_stage = out port Reg(Stage()) init(Stage.idle)
   val global_stage_previous = Reg(Stage()) init(Stage.idle)

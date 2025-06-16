@@ -2,6 +2,7 @@
 
 import spinal.core._
 import spinal.lib._
+import HeliosParams._
 
 object NeighborID extends Enumeration {
   type NeighborID = Value
@@ -15,11 +16,7 @@ object NeighborID extends Enumeration {
 
 import NeighborID._
 
-case class Correction(
-  grid_width_x: Int = 4,
-  grid_width_z: Int = 1,
-  grid_width_u: Int = 3,
-) extends Bundle {
+case class Correction() extends Bundle {
   // Some 0-th slots are unused and squashed
   val ns_tail = Vec.fill(grid_width_x - 1)(Bits(grid_width_z bits))
   val ew_tail = Vec.fill(grid_width_x - 1)(Bits(grid_width_z bits))
@@ -38,17 +35,7 @@ case class Correction(
   def ud(i: Int, j: Int) = ud_tail(i)(j)
 }
 
-class DecodingGraph (
-  grid_width_x: Int = 4,
-  grid_width_z: Int = 1, // is this ever not 1?
-  grid_width_u: Int = 3,
-  max_weight: Int = 2
-) extends Component {
-  /* derived params */
-  val x_bit_width = log2Up(grid_width_x)
-  val z_bit_width = log2Up(grid_width_z)
-  val u_bit_width = log2Up(grid_width_u)
-  val address_width = x_bit_width + z_bit_width + u_bit_width
+class DecodingGraph () extends Component {
   /* IO */
   val measurements = in port Vec.fill(grid_width_x)(Bits(grid_width_z bits)) 
   val global_stage = in port Stage()
@@ -58,14 +45,14 @@ class DecodingGraph (
     Vec.fill(grid_width_x)(Vec.fill(grid_width_z)(UInt(address_width bits))))  
   val busy = out port Vec.fill(grid_width_u)(
     Vec.fill(grid_width_x)(Bits(grid_width_z bits)))
-  val correction = out port Correction(grid_width_x, grid_width_z, grid_width_u)
+  val correction = out port Correction()
   /* logic */
   // Setting up grid of processing units
   val processing_unit = Seq.tabulate(grid_width_u, grid_width_x, grid_width_z) {
     (k, i, j) => {
     val address = (k << (x_bit_width + z_bit_width)) + (i << z_bit_width) + j
     val neighbor_count = 6
-    val pu = new ProcessingUnit(address_width, neighbor_count, address)
+    val pu = new ProcessingUnit()
     pu.global_stage := global_stage
     odd_clusters(k)(i)(j) := pu.odd
     roots(k)(i)(j) := pu.root
@@ -95,7 +82,7 @@ class DecodingGraph (
     ai: Int, aj: Int, ak: Int,
     bi: Int, bj: Int, bk: Int,
     adir: NeighborID, bdir: NeighborID) = {
-    val link = new NeighborLink(address_width, max_weight)
+    val link = new NeighborLink()
     val unit_a = processing_unit(ak)(ai)(aj)
     val unit_b = processing_unit(bk)(bi)(bj)
     link.global_stage := global_stage
@@ -123,7 +110,7 @@ class DecodingGraph (
     weight_in: UInt)(
     i: Int, j: Int, k: Int, dir: NeighborID,
     boundary_condition: Boundary.E) = {
-    val link = new NeighborLink(address_width, max_weight)
+    val link = new NeighborLink()
     val unit = processing_unit(k)(i)(j)
     link.global_stage := global_stage
     unit.neighbor_fully_grown(dir.id) := link.fully_grown
