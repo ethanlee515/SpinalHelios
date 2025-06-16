@@ -2,7 +2,7 @@ package build
 import mill._, scalalib._
 
 object Helios extends ScalaModule {
-  def scalaVersion = "2.13.11"
+  def scalaVersion = "2.13.16"
   def ivyDeps = Agg(
     ivy"com.github.spinalhdl::spinalhdl-core:1.12.2",
     ivy"com.github.spinalhdl::spinalhdl-lib:1.12.2"
@@ -13,5 +13,6 @@ object Helios extends ScalaModule {
   object test extends ScalaTests {
     def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.8.5")
     def testFramework = "utest.runner.Framework"
+    def testSandboxWorkingDir = false
   }
 }
