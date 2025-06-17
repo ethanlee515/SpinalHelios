@@ -51,6 +51,10 @@ class UnifiedController() extends Component {
       when(command.valid && command_ready) {
         delay_counter := 0
         switch(command.payload) {
+          // TODO this is... useless, no?
+          // Just need "measurement data" command...
+          // Or no command at all, no?
+          // This handshake is so cooked
           is(Command.start_decoding) {
             global_stage := Stage.parameters_loading
           }
