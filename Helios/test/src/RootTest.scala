@@ -61,7 +61,12 @@ object RootTest extends TestSuite {
   def tests = Tests {
     test("checking roots against test data") {
       var ctr = 0
-      SimConfig.compile { new FlattenedHelios }.doSim { dut =>
+      SimConfig.compile {
+        val dut = new FlattenedHelios
+        dut.core.controller.global_stage.simPublic()
+        dut.core.controller.measurement_rounds.simPublic()
+        dut
+      }.doSim { dut =>
         val driver = new Driver(dut)
         driver.init()
         driver.do_shot(input_data(0))

@@ -4,7 +4,7 @@ import spinal.core._
 import spinal.lib._
 import HeliosParams._
 
-class ProcessingUnit() extends Component {
+class ProcessingUnit(address: Int) extends Component {
   /* IO */
   val measurement = in Bool()
   val measurement_out = out Bool()
@@ -73,8 +73,7 @@ class ProcessingUnit() extends Component {
   }
   switch(stage) {
     is(Stage.measurement_loading) {
-      // TODO fix
-      root := U(0)
+      root := address
       parent_vector := B(0)
     }
     is(Stage.merge) {
@@ -122,8 +121,6 @@ class ProcessingUnit() extends Component {
           odd_to_children := B(0)
         } otherwise {
           odd := True
-          // TODO double check if `last` is right.
-          // Think `Bits` are little endian?
           odd_to_children := neighbor_is_boundary.orR ? B(0) |
             OHMasking.last(neighbor_parent_vector & child_touching_boundary)
         }
@@ -135,7 +132,6 @@ class ProcessingUnit() extends Component {
             odd_to_children := B(0)
           } otherwise {
             odd := False
-            // TODO same as above
             odd_to_children := OHMasking.last(
               neighbor_parent_vector & child_touching_boundary)
           }

@@ -52,7 +52,7 @@ class DecodingGraph () extends Component {
     (k, i, j) => {
     val address = (k << (x_bit_width + z_bit_width)) + (i << z_bit_width) + j
     val neighbor_count = 6
-    val pu = new ProcessingUnit()
+    val pu = new ProcessingUnit(address)
     pu.global_stage := global_stage
     odd_clusters(k)(i)(j) := pu.odd
     roots(k)(i)(j) := pu.root

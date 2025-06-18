@@ -18,8 +18,6 @@ class UnifiedController() extends Component {
   val measurements = out port Reg(Vec.fill(grid_width_x)(Bits(grid_width_z bits)))
   // rewriting input as streams backed by registers
   val meas_in = slave Stream(Vec.fill(grid_width_x)(Bits(grid_width_z bits)))
-  val meas_in_ready = Reg(Bool()) init(False)
-  meas_in.ready := meas_in_ready
   val command = slave Stream(Command())
   val command_ready = Reg(Bool()) init(False)
   command.ready := command_ready
@@ -32,7 +30,7 @@ class UnifiedController() extends Component {
   val odd_clusters = Reg(Bool())
   /* logic */
   command_ready := (global_stage === Stage.idle)
-  meas_in_ready := (global_stage === Stage.measurement_preparing)
+  meas_in.ready := (global_stage === Stage.measurement_preparing)
   busy := busy_PE.orR
   odd_clusters := odd_clusters_PE.orR
   switch(global_stage) {
@@ -45,7 +43,7 @@ class UnifiedController() extends Component {
   }
   global_stage_previous := global_stage
   val delay_counter = Reg(UInt(log2Up(max_delay + 1) bits)) init(0)
-  val measurement_rounds = Reg(UInt(16 bits))
+  val measurement_rounds = Reg(UInt(16 bits)) init(0)
   switch(global_stage) {
     is(Stage.idle) {
       when(command.valid && command_ready) {
@@ -70,7 +68,7 @@ class UnifiedController() extends Component {
       measurement_rounds := 0
     }
     is(Stage.measurement_preparing) {
-      when(meas_in.valid && meas_in_ready) {
+      when(meas_in.fire) {
         measurements := meas_in.payload
         global_stage := Stage.measurement_loading
         delay_counter := 0
