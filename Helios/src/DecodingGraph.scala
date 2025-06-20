@@ -129,8 +129,10 @@ class DecodingGraph() extends Component {
     val is_error_systolic_in = Bool()
     val is_error_out = Bool()
     val weight_in = weight_ns
-    val link_0 = neighbor_link_0(is_error_systolic_in, is_error_out, weight_in) _
-    val link_single = neighbor_link_single(is_error_systolic_in, is_error_out, weight_in) _
+    val link_0 =
+      neighbor_link_0(is_error_systolic_in, is_error_out, weight_in) _
+    val link_single =
+      neighbor_link_single(is_error_systolic_in, is_error_out, weight_in) _
     if (i == 0 && j < grid_width_z) {
       // "first row"
       link_single(i, j, k, NeighborID.north, Boundary.nexist_edge)
@@ -145,7 +147,9 @@ class DecodingGraph() extends Component {
     } else if(i < grid_width_x && i > 0 && i % 2 == 0 && j == grid_width_z) {
       // "Last element of even rows"
       link_single(i - 1, j - 1, k, NeighborID.south, Boundary.a_boundary)
-    } else if(i < grid_width_x && i > 0 && i % 2 == 0 && j > 0 && j < grid_width_z) {
+    } else if(
+      i < grid_width_x && i > 0 && i % 2 == 0 && j > 0 && j < grid_width_z
+    ) {
       // "Middle element of even rows"
       link_0(i - 1, j - 1, k, i, j, k, NeighborID.south, NeighborID.north)
     }
@@ -160,12 +164,15 @@ class DecodingGraph() extends Component {
     }
   }
   val ew = Seq.tabulate(
-      grid_width_u, grid_width_x + 1, grid_width_z + 1) { (k, i, j) => new Area {
+    grid_width_u, grid_width_x + 1, grid_width_z + 1
+  ) { (k, i, j) => new Area {
     val is_error_systolic_in = Bool()
     val is_error_out = Bool()
     val weight_in = weight_ew
-    val link_0 = neighbor_link_0(is_error_systolic_in, is_error_out, weight_in) _
-    val link_single = neighbor_link_single(is_error_systolic_in, is_error_out, weight_in) _
+    val link_0 =
+      neighbor_link_0(is_error_systolic_in, is_error_out, weight_in) _
+    val link_single =
+      neighbor_link_single(is_error_systolic_in, is_error_out, weight_in) _
     if(i == 0 && j < grid_width_z) {
       // "First row"
       link_single(i, j, k, NeighborID.east, Boundary.nexist_edge)
@@ -178,13 +185,17 @@ class DecodingGraph() extends Component {
     } else if(i < grid_width_x && i > 0 && i % 2 == 1 && j == 0) {
       // "First element of odd rows"
       link_single(i - 1, j, k, NeighborID.west, Boundary.a_boundary)
-    } else if(i < grid_width_x - 1 && i > 0 && i % 2 == 1 && j == grid_width_z) {
+    } else if(
+      i < grid_width_x - 1 && i > 0 && i % 2 == 1 && j == grid_width_z
+    ) {
       // "Last element of odd rows excluding last row"
       link_single(i, j - 1, k, NeighborID.east, Boundary.nexist_edge)
     } else if(i == grid_width_x - 1 && j == grid_width_z) {
       // Last element of last odd row
       link_single(i, j - 1, k, NeighborID.east, Boundary.a_boundary)
-    } else if(i < grid_width_x && i > 0 && i % 2 == 1 && j > 0 && j < grid_width_z) {
+    } else if(
+      i < grid_width_x && i > 0 && i % 2 == 1 && j > 0 && j < grid_width_z
+    ) {
       // Middle elements of odd rows
       link_0(i, j - 1, k, i - 1, j, k, NeighborID.east, NeighborID.west)
     }
@@ -207,12 +218,15 @@ class DecodingGraph() extends Component {
       ew(k)(i)(j).is_error_systolic_in := False
     }
   }
-  val ud = Seq.tabulate(grid_width_u + 1, grid_width_x, grid_width_z) {(k, i, j) => new Area {
+  val ud = Seq.tabulate(grid_width_u + 1, grid_width_x, grid_width_z) {
+      (k, i, j) => new Area {
     val is_error_systolic_in = Bool()
     val is_error_out = Bool()
     val weight_in = weight_ud
-    val link_0 = neighbor_link_0(is_error_systolic_in, is_error_out, weight_in) _
-    val link_single = neighbor_link_single(is_error_systolic_in, is_error_out, weight_in) _
+    val link_0 =
+      neighbor_link_0(is_error_systolic_in, is_error_out, weight_in) _
+    val link_single =
+      neighbor_link_single(is_error_systolic_in, is_error_out, weight_in) _
     if(k == 0) {
       link_single(i, j, k, NeighborID.down, Boundary.a_boundary)
     } else if(k == grid_width_u) {

@@ -63,7 +63,8 @@ class ProcessingUnit(address: Int) extends Component {
     m := measurement
   }
   measurement_out := m
-  neighbor_increase := odd && (stage === Stage.grow) && (last_stage =/= Stage.grow)
+  neighbor_increase :=
+    odd && (stage === Stage.grow) && (last_stage =/= Stage.grow)
   // solver stuff
   val solver = new MinValLess8xWithIndex(address_width, neighbor_count)
   for(i <- 0 until neighbor_count) {
@@ -190,7 +191,8 @@ class ProcessingUnit(address: Int) extends Component {
         next_cluster_parity =/= cluster_parity ||
         next_cluster_touching_boundary =/= cluster_touching_boundary ||
         (parent_vector.orR && ((parent_vector & parent_odd).orR =/= odd)) ||
-        (!(parent_vector.orR) && ((next_cluster_parity & !next_cluster_touching_boundary) =/= odd))
+        (!(parent_vector.orR) &&
+          ((next_cluster_parity & !next_cluster_touching_boundary) =/= odd))
     }
     is(Stage.peeling) {
       busy := child_incomplete

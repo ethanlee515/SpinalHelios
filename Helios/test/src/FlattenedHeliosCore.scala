@@ -29,7 +29,9 @@ class FlattenedHelios() extends Component {
   */
   val output = out port Flow(Correction())
   output << core.output
-  val roots = Seq.tabulate(grid_width_u, grid_width_x, grid_width_z) { (k, i, j) =>
+  val roots = Seq.tabulate(
+    grid_width_u, grid_width_x, grid_width_z
+  ) { (k, i, j) =>
     val rij = out UInt(address_width bits)
     rij := core.roots(k)(i)(j)
     rij

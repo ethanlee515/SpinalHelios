@@ -4,7 +4,10 @@ import spinal.core._
 import spinal.lib._
 import HeliosParams._
 
-class NeighborLink(weight: Int, boundary_condition: Boundary.Value) extends Component {
+class NeighborLink(
+  weight: Int,
+  boundary_condition: Boundary.Value
+) extends Component {
   // `+ 1` to store from 0 to max_weight *inclusive*
   val link_bit_width = log2Up(max_weight + 1)
   /* IO */

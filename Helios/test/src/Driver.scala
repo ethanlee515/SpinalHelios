@@ -32,7 +32,8 @@ class HeliosDriver(dut: FlattenedHelios) {
   }
 
   def log_stage() = {
-    println(f"stage = ${dut.core.controller.global_stage.toEnum} at t = ${simTime()}")
+    val stage = dut.core.controller.global_stage.toEnum
+    println(f"stage = ${stage} at t = ${simTime()}")
   }
 
   def do_shot(meas_in: Seq[Seq[Seq[Boolean]]]) = {
@@ -68,17 +69,23 @@ class HeliosDriver(dut: FlattenedHelios) {
   }
 
   def log_busy() = {
-    val busys = Seq.tabulate(grid_width_u, grid_width_x, grid_width_z) { (k, i, j) =>
+    val busys = Seq.tabulate(
+      grid_width_u, grid_width_x, grid_width_z
+    ) { (k, i, j) =>
       dut.core.graph.processing_unit(k)(i)(j).busy.toBoolean
     }
     println(f"busy = ${busys}")
   }
 
   def log_solver_valids() = {
-    val in_valids = Seq.tabulate(grid_width_u, grid_width_x, grid_width_z, neighbor_count) { (k, i, j, h) =>
+    val in_valids = Seq.tabulate(
+      grid_width_u, grid_width_x, grid_width_z, neighbor_count
+    ) { (k, i, j, h) =>
       dut.core.graph.processing_unit(k)(i)(j).solver.values(h).valid.toBoolean
     }
-    val out_valids = Seq.tabulate(grid_width_u, grid_width_x, grid_width_z) { (k, i, j) =>
+    val out_valids = Seq.tabulate(
+      grid_width_u, grid_width_x, grid_width_z
+    ) { (k, i, j) =>
       dut.core.graph.processing_unit(k)(i)(j).solver.valids.toInt
     }
     println(f"solver in valids = ${in_valids}")
