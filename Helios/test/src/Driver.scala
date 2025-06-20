@@ -22,18 +22,13 @@ object HeliosDriver {
 class HeliosDriver(dut: FlattenedHelios) {
   val cd = dut.clockDomain
   def init() = {
-    dut.command_valid #= false
+    // dut.command_valid #= false
     dut.meas_in_valid #= false
     cd.forkStimulus(10)
     cd.assertReset()
     sleep(100)
     cd.deassertReset()
-    assert(!cd.waitSamplingWhere(10) {dut.command_ready.toBoolean })
-    dut.command_valid #= true
-    dut.command_payload #= Command.start_decoding
-    cd.waitSampling()
-    dut.command_valid #= false
-    assert(!cd.waitSamplingWhere(10) {dut.command_ready.toBoolean })
+    assert(!cd.waitSamplingWhere(1000) { dut.meas_in_ready.toBoolean })
   }
 
   def log_stage() = {
@@ -42,15 +37,6 @@ class HeliosDriver(dut: FlattenedHelios) {
 
   def do_shot(meas_in: Seq[Seq[Seq[Boolean]]]) = {
     //println(f"shot started at t = ${simTime()}")
-    // wait until ready
-    assert(!cd.waitSamplingWhere(20) { dut.command_ready.toBoolean })
-    assert(dut.command_ready.toBoolean)
-    // Handshake
-    dut.command_valid #= true
-    dut.command_payload #= Command.measurement_data
-    cd.waitSampling()
-    dut.command_valid #= false
-    // pass input
     for(k <- 0 until grid_width_u) {
       assert(!cd.waitSamplingWhere(1000) { dut.meas_in_ready.toBoolean })
       dut.meas_in_valid #= true
@@ -71,7 +57,6 @@ class HeliosDriver(dut: FlattenedHelios) {
       log_solver_valids()
       println()
     }
-    // assert(!dut.meas_in_ready.toBoolean)
     */
     assert(!cd.waitSamplingWhere(1000) { dut.output.valid.toBoolean })
   }

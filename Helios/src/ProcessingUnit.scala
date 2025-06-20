@@ -53,8 +53,8 @@ class ProcessingUnit(address: Int) extends Component {
     to_neighbor(i).peeling_parity_completed := peeling_parity_completed
   }
   // book-keeping
-  val stage = Reg(Stage()) init(Stage.idle)
-  val last_stage = Reg(Stage()) init(Stage.idle)
+  val stage = Reg(Stage()) init(Stage.measurement_preparing)
+  val last_stage = Reg(Stage()) init(Stage.measurement_preparing)
   stage := global_stage
   last_stage := stage
   // `measurement_out` is also backed by register

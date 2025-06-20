@@ -7,16 +7,13 @@ import HeliosParams._
 class UnifiedController() extends Component {
   val pu_count = grid_width_x * grid_width_z * grid_width_u
   /* IO and states */
-  val global_stage = out port Reg(Stage()) init(Stage.idle)
-  val global_stage_previous = Reg(Stage()) init(Stage.idle)
+  val global_stage = out port Reg(Stage()) init(Stage.measurement_preparing)
+  val global_stage_previous = Reg(Stage()) init(Stage.measurement_preparing)
   val odd_clusters_PE = in port Bits(pu_count bits)
   val busy_PE = in port Bits(pu_count bits)
   val measurements = out port Reg(Vec.fill(grid_width_x)(Bits(grid_width_z bits)))
   // rewriting input as streams backed by registers
   val meas_in = slave Stream(Vec.fill(grid_width_x)(Bits(grid_width_z bits)))
-  val command = slave Stream(Command())
-  val command_ready = Reg(Bool()) init(False)
-  command.ready := command_ready
   // This actually corresponds to `output_fifo_valid`
   // FIFO and serializer scrapped, and payload is redundant.
   val output_valid = out port Reg(Bool()) init(False)
@@ -25,7 +22,6 @@ class UnifiedController() extends Component {
   val busy = Reg(Bool())
   val odd_clusters = Reg(Bool())
   /* logic */
-  command_ready := (global_stage === Stage.idle)
   meas_in.ready := (global_stage === Stage.measurement_preparing)
   busy := busy_PE.orR
   odd_clusters := odd_clusters_PE.orR
@@ -41,28 +37,6 @@ class UnifiedController() extends Component {
   val delay_counter = Reg(UInt(log2Up(max_delay + 1) bits)) init(0)
   val measurement_rounds = Reg(UInt(16 bits)) init(0)
   switch(global_stage) {
-    is(Stage.idle) {
-      when(command.valid && command_ready) {
-        delay_counter := 0
-        switch(command.payload) {
-          // TODO this is... useless, no?
-          // Just need "measurement data" command...
-          // Or no command at all, no?
-          // This handshake is so cooked
-          is(Command.start_decoding) {
-            global_stage := Stage.parameters_loading
-          }
-          is(Command.measurement_data) {
-            global_stage := Stage.measurement_preparing
-            measurement_rounds := 0
-          }
-        }
-      }
-    }
-    is(Stage.parameters_loading) {
-      global_stage := Stage.idle
-      measurement_rounds := 0
-    }
     is(Stage.measurement_preparing) {
       when(meas_in.fire) {
         measurements := meas_in.payload
@@ -102,11 +76,9 @@ class UnifiedController() extends Component {
       }
     }
     is(Stage.result_valid) {
-      measurement_rounds := measurement_rounds + 1
-      when(measurement_rounds >= grid_width_u - 1) {
-        global_stage := Stage.idle
-      }
-      delay_counter := 0
+      global_stage := Stage.measurement_preparing
+      measurement_rounds := 0
+
     }
   }
   output_valid := (global_stage === Stage.result_valid)
