@@ -4,7 +4,7 @@ import spinal.core._
 import spinal.lib._
 import HeliosParams._
 
-class NeighborLink() extends Component {
+class NeighborLink(weight: Int, boundary_condition: Boundary.Value) extends Component {
   // `+ 1` to store from 0 to max_weight *inclusive*
   val link_bit_width = log2Up(max_weight + 1)
   /* IO */
@@ -20,43 +20,35 @@ class NeighborLink() extends Component {
   val b_input_data = in port NeighborsCommunication()
   val a_output_data = out port NeighborsCommunication()
   val b_output_data = out port NeighborsCommunication()
-  val weight_in = in UInt(link_bit_width bits)
-  // TODO why is this an input wire?
-  // Topology doesn't change during runtime, right?
-  // Why not just a parameter then?
-  val boundary_condition_in = in port Boundary()
   val is_error_systolic = in Bool()
-  val weight_out = out port Reg(UInt(link_bit_width bits)) init(0)
-  val boundary_condition_out = out port Reg(Boundary()) init(
-    Boundary.no_boundary)
   /* states */
   val growth = Reg(UInt(link_bit_width bits)) init(0)
   /* logic */
   // compute growth
   val s = UInt(link_bit_width + 1 bits)
-  switch(boundary_condition_out) {
-    is(Boundary.no_boundary) {
+  boundary_condition match {
+    case Boundary.no_boundary => {
       s := (growth +^ U(a_increase)) + U(b_increase)
     }
-    is(Boundary.a_boundary) {
+    case Boundary.a_boundary => {
       s := growth +^ U(a_increase)
     }
-    default {
+    case _ => {
       s := 0
     }
   }
   when(global_stage === Stage.measurement_loading) {
     growth := 0
   } otherwise {
-    when(s > weight_out) {
-      growth := weight_out
+    when(s > weight) {
+      growth := weight
     } otherwise {
       growth := s.resized
     }
   }
   // compute is_error
-  switch(boundary_condition_out) {
-    is(Boundary.no_boundary) {
+  boundary_condition match {
+    case Boundary.no_boundary => {
       switch(global_stage) {
         is(Stage.measurement_loading) {
           is_error := False
@@ -69,7 +61,7 @@ class NeighborLink() extends Component {
         }
       }
     }
-    is(Boundary.a_boundary) {
+    case Boundary.a_boundary => {
       switch(global_stage) {
         is(Stage.measurement_loading) {
           is_error := False
@@ -82,22 +74,22 @@ class NeighborLink() extends Component {
         }
       }
     }
-    default {
+    case _ => {
       is_error := False
     }
   }
-  fully_grown := (growth >= weight_out)
-  is_boundary :=
-    (boundary_condition_out === Boundary.a_boundary) && fully_grown
-  when(boundary_condition_out === Boundary.no_boundary) {
+  fully_grown := (growth >= weight)
+  is_boundary := {
+    if(boundary_condition == Boundary.a_boundary)
+      fully_grown
+    else
+      False
+  }
+  if(boundary_condition == Boundary.no_boundary) {
     a_output_data := b_input_data
     b_output_data := a_input_data
-  } otherwise {
+  } else {
     a_output_data.assignFromBits(B(0, address_width + 7 bits))
     b_output_data.assignFromBits(B(0, address_width + 7 bits))
-  }
-  when(global_stage === Stage.parameters_loading) {
-    weight_out := weight_in
-    boundary_condition_out := boundary_condition_in
   }
 }

@@ -5,9 +5,13 @@ object Stage extends SpinalEnum {
     parameters_loading, measurement_preparing = newElement()
 }
 
-object Boundary extends SpinalEnum {
-  val no_boundary, a_boundary, nexist_edge, connected_to_a_FIFO =
-    newElement()
+object Boundary extends Enumeration {
+  type Boundary = Value
+  val no_boundary, a_boundary, nexist_edge = Value
+}
+
+object Command extends SpinalEnum {
+  val start_decoding, measurement_data = newElement()
 }
 
 object HeliosParams {

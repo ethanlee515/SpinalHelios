@@ -4,10 +4,6 @@ import spinal.core._
 import spinal.lib._
 import HeliosParams._
 
-object Command extends SpinalEnum {
-  val start_decoding, measurement_data = newElement()
-}
-
 class UnifiedController() extends Component {
   val pu_count = grid_width_x * grid_width_z * grid_width_u
   /* IO and states */
