@@ -53,8 +53,6 @@ class HeliosDriver(dut: FlattenedHelios) {
     // pass input
     for(k <- 0 until grid_width_u) {
       assert(!cd.waitSamplingWhere(1000) { dut.meas_in_ready.toBoolean })
-      assert(!dut.meas_in_valid.toBoolean)
-      assert(dut.meas_in_ready.toBoolean)
       dut.meas_in_valid #= true
       for(i <- 0 until grid_width_x;
           j <- 0 until grid_width_z) {
@@ -63,8 +61,8 @@ class HeliosDriver(dut: FlattenedHelios) {
       cd.waitSampling()
       dut.meas_in_valid #= false
     }
-    println(f"inputs set at t = ${simTime()}")
     // wait until output valid
+    /*
     for(_ <- 0 until 15) {
       cd.waitSampling()
       log_stage()
@@ -74,7 +72,8 @@ class HeliosDriver(dut: FlattenedHelios) {
       println()
     }
     // assert(!dut.meas_in_ready.toBoolean)
-    // assert(!cd.waitSamplingWhere(1000) { dut.output.valid.toBoolean })
+    */
+    assert(!cd.waitSamplingWhere(1000) { dut.output.valid.toBoolean })
   }
 
   def read_roots() : Seq[Seq[Seq[Address]]] = {

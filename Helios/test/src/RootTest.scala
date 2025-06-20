@@ -69,9 +69,11 @@ object RootTest extends TestSuite {
       }.doSim { dut =>
         val driver = new HeliosDriver(dut)
         driver.init()
-        driver.do_shot(input_data(0))
-        val roots = driver.read_roots()
-        assert(roots == output_data(0))
+        for(i <- 0 until input_data.length) {
+          driver.do_shot(input_data(i))
+          val roots = driver.read_roots()
+          assert(roots == output_data(i))
+        }
       } 
     }
   }
