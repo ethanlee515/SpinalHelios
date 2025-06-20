@@ -4,7 +4,9 @@ Reimplementation of ["Helios" quantum error correction](https://github.com/NamiL
 
 Usage:
 * `./mill Helios.runMain CompileVerilog`: Output Verilog as "HeliosCore.v"
-* `./mill Helios.test`: run all tests. (Not yet implemented.)
+* `./mill Helios.test`: Run the ["root test"](./Helios/test/src/RootTest.scala), which checks that the union find algorithm works as intended.
+  This test is ported from what was labelled as ["full test"](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/test_benches/full_tests/single_FPGA_FIFO_verification_test_rsc.sv) in the original Verilog implementation of Helios.
+  We are currently working on adding another test that checks if the "peeling" stage indeed outputs the correct Pauli corrections.
 
 ## Prerequisites
 
