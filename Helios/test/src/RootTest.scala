@@ -60,7 +60,6 @@ object RootTest extends TestSuite {
 
   def tests = Tests {
     test("checking roots against test data") {
-      println(f"expected roots = ${output_data(0)}")
       var ctr = 0
       SimConfig.compile {
         val dut = new FlattenedHelios
