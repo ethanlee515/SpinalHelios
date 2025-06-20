@@ -17,7 +17,7 @@ object HeliosParams {
   val grid_width_z = 1
   val grid_width_u = 3
   val iteration_counter_width = 8
-  val max_delay = 2
+  val max_delay = 3
   val neighbor_count = 6
   /* derived params */
   val x_bit_width = log2Up(grid_width_x)

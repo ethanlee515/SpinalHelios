@@ -17,11 +17,14 @@ class FlattenedHelios() extends Component {
     core.meas_in.payload(i)(j) := mij
     mij
   }
-  val start = in Bool()
-  core.command.valid := start
-  core.command.payload := Command.measurement_data
+  /* TODO this is nonsense.
+   * The parameters can probably be hard-coded instead of loaded. */
   val command_ready = out Bool()
   command_ready := core.command.ready
+  val command_valid = in Bool()
+  core.command.valid := command_valid
+  val command_payload = in port Command()
+  core.command.payload := command_payload
   val output = out port Flow(Correction())
   output << core.output
   val roots = Seq.tabulate(grid_width_u, grid_width_x, grid_width_z) { (k, i, j) =>
