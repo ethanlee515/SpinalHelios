@@ -18,13 +18,10 @@ import NeighborID._
 
 case class Correction() extends Bundle {
   // Some 0-th slots are unused and squashed
-  val ns_tail =
-    Vec.fill(grid_width_u, grid_width_x - 1)(Bits(grid_width_z bits))
-  val ew_tail =
-    Vec.fill(grid_width_u, grid_width_x - 1)(Bits(grid_width_z bits))
+  val ns_tail = Vec.fill(grid_width_u, grid_width_x - 1, grid_width_z)(Bool())
+  val ew_tail = Vec.fill(grid_width_u, grid_width_x - 1, grid_width_z)(Bool())
   val ew_last = Bits(grid_width_u bits)
-  val ud_tail =
-    Vec.fill(grid_width_u, grid_width_x)(Bits(grid_width_z bits))
+  val ud_tail = Vec.fill(grid_width_u, grid_width_x, grid_width_z)(Bool())
   // Dealing with 1-indexing correspondingly
   def ns(k: Int, i: Int, j: Int) = ns_tail(k)(i - 1)(j - 1)
   def ew(k: Int, i: Int, j: Int) = {
@@ -40,14 +37,13 @@ case class Correction() extends Bundle {
 
 class DecodingGraph() extends Component {
   /* IO */
-  val measurements = in port Vec.fill(grid_width_x)(Bits(grid_width_z bits)) 
+  val measurements = in port Vec.fill(grid_width_x, grid_width_z)(Bool()) 
   val global_stage = in port Stage()
-  val odd_clusters = out port Vec.fill(grid_width_u)(
-    Vec.fill(grid_width_x)(Bits(grid_width_z bits)))
-  val roots = out port Vec.fill(grid_width_u)(
-    Vec.fill(grid_width_x)(Vec.fill(grid_width_z)(UInt(address_width bits))))  
-  val busy = out port Vec.fill(grid_width_u)(
-    Vec.fill(grid_width_x)(Bits(grid_width_z bits)))
+  val odd_clusters =
+    out port Vec.fill(grid_width_u, grid_width_x, grid_width_z)(Bool())
+  val roots = out port Vec.fill(
+    grid_width_u, grid_width_x, grid_width_z)(UInt(address_width bits))
+  val busy = out port Vec.fill(grid_width_u, grid_width_x, grid_width_z)(Bool())
   val correction = out port Correction()
   /* logic */
   // Setting up grid of processing units

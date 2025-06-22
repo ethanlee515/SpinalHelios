@@ -5,12 +5,12 @@ import spinal.lib._
 import HeliosParams._
 
 class HeliosCore() extends Component {
-  val meas_in = slave Stream(Vec.fill(grid_width_x)(Bits(grid_width_z bits)))
+  val meas_in = slave Stream(Vec.fill(grid_width_x, grid_width_z)(Bool()))
   val output = out port Flow(Correction())
   val graph = new DecodingGraph()
   val controller = new UnifiedController()
-  val roots = out port Vec.fill(grid_width_u)(
-    Vec.fill(grid_width_x)(Vec.fill(grid_width_z)(UInt(address_width bits))))
+  val roots = out port Vec.fill(grid_width_u, grid_width_x, grid_width_z)(
+    UInt(address_width bits))
   controller.meas_in << meas_in
   graph.measurements := controller.measurements
   for(k <- 0 until grid_width_u;

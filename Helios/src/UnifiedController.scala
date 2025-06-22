@@ -12,9 +12,9 @@ class UnifiedController() extends Component {
   val odd_clusters_PE = in port Bits(pu_count bits)
   val busy_PE = in port Bits(pu_count bits)
   val measurements =
-    out port Reg(Vec.fill(grid_width_x)(Bits(grid_width_z bits)))
+    out port Reg(Vec.fill(grid_width_x, grid_width_z)(Bool()))
   // rewriting input as streams backed by registers
-  val meas_in = slave Stream(Vec.fill(grid_width_x)(Bits(grid_width_z bits)))
+  val meas_in = slave Stream(Vec.fill(grid_width_x, grid_width_z)(Bool()))
   // This actually corresponds to `output_fifo_valid`
   // FIFO and serializer scrapped, and payload is redundant.
   val output_valid = out port Reg(Bool()) init(False)
