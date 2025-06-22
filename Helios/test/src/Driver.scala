@@ -1,9 +1,11 @@
+import scala.io.Source
 import spinal.core._
 import spinal.lib._
 import spinal.core.sim._
 import HeliosParams._
 
 object HeliosDriver {
+  // Poor man's whiteboxer
   def simPublics(dut: FlattenedHelios) = {
     dut.core.controller.global_stage.simPublic()
     dut.core.controller.measurement_rounds.simPublic()
@@ -16,6 +18,26 @@ object HeliosDriver {
         dut.core.graph.processing_unit(k)(i)(j).solver.values(h).simPublic()
       }
     }
+    dut.core.output.payload.ns_tail.simPublic()
+    dut.core.output.payload.ew_tail.simPublic()
+    dut.core.output.payload.ew_last.simPublic()
+    dut.core.output.payload.ud_tail.simPublic()
+  }
+
+  def parseInput(filename: String) = {
+    val lines = Source.fromFile(filename).getLines().toList
+    assert(lines.length == 13000)
+    val shots = Seq.tabulate(1000, 12) { (i, j) =>
+      val line = lines(13 * i + j + 1)
+      assert(line == "00000000" || line == "00000001")
+      line == "00000001"
+    }
+    val grids = shots.map(shot => {
+      Seq.tabulate(3, 4, 1) { (k, i, j) =>
+        shot(Address(k, i, j).flatIndex)
+      }
+    })
+    grids
   }
 }
 
@@ -29,6 +51,30 @@ class HeliosDriver(dut: FlattenedHelios) {
     sleep(100)
     cd.deassertReset()
     assert(!cd.waitSamplingWhere(1000) { dut.meas_in_ready.toBoolean })
+  }
+
+  def getCorrection(k: Int, flatIndex: Int) : Bool = {
+    val ns_len = (grid_width_x - 1) * grid_width_z
+    val ew_len = (grid_width_x - 1) * grid_width_z + 1
+    if(flatIndex < ns_len) {
+      val i = (flatIndex / grid_width_z) + 1
+      val j = (flatIndex % grid_width_z) + 1
+      return dut.ns(k, i, j)
+    } else if(flatIndex < ns_len + ew_len - 1) {
+      val ew_index = flatIndex - ns_len
+      val i = (ew_index / grid_width_z) + 1
+      val j = ew_index % grid_width_z
+      return dut.ew(k, i, j)
+    } else if(flatIndex == ns_len + ew_len - 1) {
+      val i = grid_width_x - 1
+      val j = grid_width_z
+      return dut.ew(k, i, j)
+    } else {
+      val ud_index = flatIndex - ns_len - ew_len
+      val i = ud_index / grid_width_z
+      val j = ud_index % grid_width_z
+      return dut.ud(k, i, j)
+    }
   }
 
   def log_stage() = {
@@ -48,7 +94,6 @@ class HeliosDriver(dut: FlattenedHelios) {
       cd.waitSampling()
       dut.meas_in_valid #= false
     }
-    // wait until output valid
     /*
     for(_ <- 0 until 15) {
       cd.waitSampling()
@@ -59,7 +104,7 @@ class HeliosDriver(dut: FlattenedHelios) {
       println()
     }
     */
-    assert(!cd.waitSamplingWhere(1000) { dut.output.valid.toBoolean })
+    assert(!cd.waitSamplingWhere(1000) { dut.output_valid.toBoolean })
   }
 
   def read_roots() : Seq[Seq[Seq[Address]]] = {
@@ -97,19 +142,21 @@ class HeliosDriver(dut: FlattenedHelios) {
   }
 }
 
-// This is super inconsistent if it should be multiply or bitshift
-// they aren't equivalent since these things aren't powers of two
-// TODO Maybe can just change things to this multiplication everywhere?
 case class Address(k: Int, i: Int, j: Int) {
-  def flatIndex = k * grid_width_x * grid_width_z + i * grid_width_z + j
+// println(f"x width = ${x_bit_width}, z width = ${z_bit_width}")
+  def flatIndex = {
+    val res = (k << (x_bit_width + z_bit_width)) + (i << z_bit_width) + j
+    // println(f"flat index of ($k, $i, $j) = $res")
+    res
+  }
 }
 
 object Address {
   def apply(flatIndex: Int) : Address = {
-    val j = flatIndex % grid_width_z
-    val ki = flatIndex / grid_width_z
-    val i = ki % grid_width_x
-    val k = ki / grid_width_x
+    val j = flatIndex & ((1 << z_bit_width) - 1)
+    val ki = flatIndex >> z_bit_width
+    val i = ki & ((1 << x_bit_width) - 1)
+    val k = ki >> x_bit_width
     Address(k, i, j)
   }
 }

@@ -12,23 +12,7 @@ object RootTest extends TestSuite {
   val output_filename =
     "ext/Helios_scalable_QEC/test_benches/test_data/output_data_3_rsc.txt"
 
-  def parseInput(filename: String) = {
-    val lines = Source.fromFile(filename).getLines().toList
-    assert(lines.length == 13000)
-    val shots = Seq.tabulate(1000, 12) { (i, j) =>
-      val line = lines(13 * i + j + 1)
-      assert(line == "00000000" || line == "00000001")
-      line == "00000001"
-    }
-    val grids = shots.map(shot => {
-      Seq.tabulate(3, 4, 1) { (k, i, j) =>
-        shot(Address(k, i, j).flatIndex)
-      }
-    })
-    grids
-  }
-
-  val input_data = parseInput(input_filename)
+  val input_data = HeliosDriver.parseInput(input_filename)
 
   def parseOutputLine(line: String) : Address = {
     val k = Integer.parseInt(line.substring(2, 4), 16)
@@ -60,7 +44,6 @@ object RootTest extends TestSuite {
 
   def tests = Tests {
     test("checking roots against test data") {
-      var ctr = 0
       SimConfig.compile {
         val dut = new FlattenedHelios
         HeliosDriver.simPublics(dut)

@@ -79,7 +79,6 @@ class UnifiedController() extends Component {
     is(Stage.result_valid) {
       global_stage := Stage.measurement_preparing
       measurement_rounds := 0
-
     }
   }
   output_valid := (global_stage === Stage.result_valid)

@@ -18,21 +18,24 @@ import NeighborID._
 
 case class Correction() extends Bundle {
   // Some 0-th slots are unused and squashed
-  val ns_tail = Vec.fill(grid_width_x - 1)(Bits(grid_width_z bits))
-  val ew_tail = Vec.fill(grid_width_x - 1)(Bits(grid_width_z bits))
-  val ew_last = Bool()
-  val ud_tail = Vec.fill(grid_width_x)(Bits(grid_width_z bits))
+  val ns_tail =
+    Vec.fill(grid_width_u, grid_width_x - 1)(Bits(grid_width_z bits))
+  val ew_tail =
+    Vec.fill(grid_width_u, grid_width_x - 1)(Bits(grid_width_z bits))
+  val ew_last = Bits(grid_width_u bits)
+  val ud_tail =
+    Vec.fill(grid_width_u, grid_width_x)(Bits(grid_width_z bits))
   // Dealing with 1-indexing correspondingly
-  def ns(i: Int, j: Int) = ns_tail(i - 1)(j - 1)
-  def ew(i: Int, j: Int) = {
+  def ns(k: Int, i: Int, j: Int) = ns_tail(k)(i - 1)(j - 1)
+  def ew(k: Int, i: Int, j: Int) = {
     if(j != grid_width_z) {
-      ew_tail(i - 1)(j)
+      ew_tail(k)(i - 1)(j)
     } else {
       assert(i == grid_width_x - 1)
-      ew_last
+      ew_last(k)
     }
   }
-  def ud(i: Int, j: Int) = ud_tail(i)(j)
+  def ud(k: Int, i: Int, j: Int) = ud_tail(k)(i)(j)
 }
 
 class DecodingGraph() extends Component {
@@ -245,18 +248,24 @@ class DecodingGraph() extends Component {
     }
   }
   // correction outputs
-  for(i <- 1 until grid_width_x;
+  for(k <- 0 until grid_width_u;
+      i <- 1 until grid_width_x;
       j <- 1 to grid_width_z) {
-    correction.ns(i, j) := ns(0)(i)(j).is_error_out
+    correction.ns(k, i, j) := ns(k)(i)(j).is_error_out
   }
-  for(i <- 1 until grid_width_x;
+  for(k <- 0 until grid_width_u;
+      i <- 1 until grid_width_x;
       j <- 0 until grid_width_z) {
-    correction.ew(i, j) := ew(0)(i)(j).is_error_out
+    correction.ew(k, i, j) := ew(k)(i)(j).is_error_out
   }
-  correction.ew(grid_width_x - 1, grid_width_z) :=
-    ew(0)(grid_width_x - 1)(grid_width_z).is_error_out
-  for(i <- 0 until grid_width_x;
+
+  for(k <- 0 until grid_width_u) {
+    correction.ew(k, grid_width_x - 1, grid_width_z) :=
+      ew(k)(grid_width_x - 1)(grid_width_z).is_error_out
+  }
+  for(k <- 0 until grid_width_u;
+      i <- 0 until grid_width_x;
       j <- 0 until grid_width_z) {
-    correction.ud(i, j) := ud(0)(i)(j).is_error_out
+    correction.ud(k, i, j) := ud(k)(i)(j).is_error_out
   }
 }
