@@ -23,7 +23,6 @@ class NeighborLink(
   val b_input_data = in port NeighborsCommunication()
   val a_output_data = out port NeighborsCommunication()
   val b_output_data = out port NeighborsCommunication()
-  val is_error_systolic = in Bool()
   /* states */
   val growth = Reg(UInt(link_bit_width bits)) init(0)
   /* logic */
@@ -56,11 +55,6 @@ class NeighborLink(
         is(Stage.measurement_loading) {
           is_error := False
         }
-        /*
-        is(Stage.result_valid) {
-          is_error := is_error_systolic
-        }
-        */
         default {
           is_error := a_is_error || b_is_error
         }
@@ -71,11 +65,6 @@ class NeighborLink(
         is(Stage.measurement_loading) {
           is_error := False
         }
-        /*
-        is(Stage.result_valid) {
-          is_error := is_error_systolic
-        }
-        */
         default {
           is_error := a_is_error
         }
