@@ -45,6 +45,7 @@ object CorrectionTest extends TestSuite {
 
   def tests = Tests {
     test("checking corrections against test data") {
+      println(f"output_data(21) = ${output_data(21)}")
       SimConfig.compile {
         val dut = new FlattenedHelios
         HeliosDriver.simPublics(dut)

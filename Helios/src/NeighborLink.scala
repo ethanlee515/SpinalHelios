@@ -56,9 +56,11 @@ class NeighborLink(
         is(Stage.measurement_loading) {
           is_error := False
         }
+        /*
         is(Stage.result_valid) {
           is_error := is_error_systolic
         }
+        */
         default {
           is_error := a_is_error || b_is_error
         }
@@ -69,9 +71,11 @@ class NeighborLink(
         is(Stage.measurement_loading) {
           is_error := False
         }
+        /*
         is(Stage.result_valid) {
           is_error := is_error_systolic
         }
+        */
         default {
           is_error := a_is_error
         }
