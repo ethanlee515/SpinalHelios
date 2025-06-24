@@ -96,4 +96,3 @@ For the theory behind this union-find algorithm, we direct the readers to the [H
     (This might break due to inconsistent uses of bitshifts vs multiplications/modulos.)
 * `meas_in` is taken over multiple rounds. This is asymmetrical from how output is treated.
   Should we take all the measurements upfront?
-* Move edge weights to the parameters file.

@@ -66,9 +66,6 @@ class DecodingGraph() extends Component {
     }
   } 
   // Setting up neighbors
-  val weight_ns = 2
-  val weight_ew = 2
-  val weight_ud = 2
   def neighbor_link_0(
       is_error_out: Bool,
       weight_in: Int)(
