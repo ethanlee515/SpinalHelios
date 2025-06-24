@@ -1,13 +1,11 @@
-# SpinalHDL Port of ["Helios" Quantum Error Correction](https://github.com/NamiLiy/Helios_scalable_QEC).
-
-**NOTE: This README is still incomplete. It will be fully written soon.**
+# SpinalHDL Port of ["Helios"](https://github.com/NamiLiy/Helios_scalable_QEC) Quantum Error Correction
 
 Usage:
-* `./mill Helios.runMain CompileVerilog`: Output Verilog as "HeliosCore.v"
-* `./mill Helios.test`: Run the following tests:
-    1. Run the ["root test"](./Helios/test/src/RootTest.scala), which checks that the union find algorithm works as intended.
+* `./mill Helios.runMain CompileVerilog`: Output Verilog as "./HeliosCore.v"
+* `./mill Helios.test`: Run the following tests using the [utest](https://github.com/com-lihaoyi/utest) framework.
+    1. The ["root test"](./Helios/test/src/RootTest.scala): Checks that the union find algorithm works as intended.
     This test is ported from what was labelled as ["full test"](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/test_benches/full_tests/single_FPGA_FIFO_verification_test_rsc.sv) in the original Verilog implementation of Helios.
-    1. Run the ["correction test"](./Helios/test/src/CorrectionTest.scala), which checks that the output Pauli corrections matches that of the original Verilog implementation.
+    1. The ["correction test"](./Helios/test/src/CorrectionTest.scala): Checks that the output Pauli corrections matches that of the original Verilog implementation.
 
 ## Prerequisites
 
@@ -18,87 +16,89 @@ Requires a reasonably recent version of JDK and Verilator.
 In particular, Scala or Mill is not required;
 the `./mill` wrapper script takes care of that.
 
-## Handshakes and Interfaces
+## Interfaces and Handshakes
 
-Here is how to use our implementation in a larger project.
-TODO recap; quantum ECC maps syndrome measurements to Pauli corrections.
-Here is a quick rundown on how to pass the measurements to the Helios core and receive the output corrections.
-1. Choose parameters (such as code distance) by modifying ["Parameters.scala"](./Helios/src/Parameters.scala).
-2. Instantiate the hardware component using `new HeliosCore()`. This creates the input and output ports:
-  * input port `meas_in` of type TODO
-  * output port `correction` of type TODO
-3. The `meas_in` will set the `ready` signal for `grid_width_u` times.
-   Each time this signal is set, a layer of input should be fed into TODO.
-4. Wait until the output correction flow gives you a valid payload.
+Recall that Helios takes `grid_width_u` rounds of syndrome measurements to account for errors occurring during the measurement process itself.
+Using these syndrome measurements, Helios then computes the corresponding Pauli errors to correct.
+We now sketch how this corresponds to the input and output interfaces of our implementation.
+1. Parameters such as the code distance can be chosen by modifying ["Parameters.scala"](./Helios/src/Parameters.scala).
+2. Instantiate the hardware component using `new HeliosCore()`. This creates the input stream `meas_in` and output flow `output`.
+3. The `meas_in` input stream expects `grid_width_x * grid_width_z` booleans.
+   It will set the `ready` signal for `grid_width_u` times.
+   Each time it is ready, a round of syndrome measurements can be fed as its payload.
+4. The `correction` flow outputs a `Correction` bundle.
+   This bundle implements a `.ns(k, i, j) -> Bool` function, allowing one to access the Pauli correction for each north-south edge.
+   Similarly for `.ew(k, i, j)` and `.ud(k, i, j)`.
+
 See an example in ["Driver.scala"](./Helios/test/src/Driver.scala).
 
 Note: The `roots` are not a real output wire.
 That is pending clean-up.
 
-## Comparison with the Verilog Version
+## Comparison with the Original Helios Implementation
 
-We try to translate the original Verilog to SpinalHDL in a wire-by-wire and register-by-register way where possible.
-Our implementation is therefore expected to preserve any timing closure properties satisfied by the original Verilog implementation.
+We try to translate the original Verilog/SystemVerilog to SpinalHDL in a wire-by-wire and register-by-register way wherever possible.
+Our implementation is therefore expected to preserve any timing closure properties satisfied by the original implementation.
 
 ### Implemented Subset and Simplifications
 
-We started from [this test](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/test_benches/full_tests/single_FPGA_FIFO_verification_test_rsc.sv) from the Verilog version.
-It is labelled as one of the "full tests", and (TODO describe).
-We determined a minimal subset of hardware components [here](TODO) that gets it to pass.
-The components are then ported to SpinalHDL, with the following adjustments.
+We started from [this test](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/test_benches/full_tests/single_FPGA_FIFO_verification_test_rsc.sv) from the original repository.
+It simulates the hardware design on [generated](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/software_code/main.c) test [data](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/test_benches/test_data/input_data_3_rsc.txt), and verifies the union-find result against [the correct result](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/test_benches/test_data/output_data_3_rsc.txt) from a [golden reference](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/software_code/union_find.c).
+We determined a minimal [subset of components](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/Makefile#L1-L8) required to pass this test.
+These components are then ported to SpinalHDL in a mostly file-by-file fashion, with adjustments described below.
 
 First, a couple features are scrapped.
 Namely, there is currently no systolic error streaming or serialization.
-Instead, the corrections are all outputed in a single cycle.
-
-We then removed the `parameter_loading` stage from the state machine.
-This stage originally sets the parameters from input wires into registers in the edges of the decoding graph.
-These parameters are then chosen statically and hard-coded as part of the decoding graph.
-The `weight_in` and `boundary_condition_in` inputs in [Neighbor Link](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/design/channels/neighbor_link_internal_v2.v#L30-L31) are turned from input wires to parameters.
-
-Finally, by removing `parameter_loading`, there is no longer a meaningful difference between the `idle` and `measurement_preparing` stages.
+Instead, the corrections are all outputted in a single cycle.
+Additionally, we removed the `parameter_loading` stage from the state machine.
+This involves changing the `weight_in` and `boundary_condition_in` in ["Neighbor Link"](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/design/channels/neighbor_link_internal_v2.v#L30-L31) from input wires to parameters.
+Finally, by removing the `parameter_loading` stage, there is no longer a meaningful difference between the `idle` and `measurement_preparing` stages.
 The two stages are therefore combined, and the [message framing headers](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/parameters/parameters.sv#L15-L17) are no longer necessary.
 
 ### Development Effort
 
-Reduction in code volume and complexity.
-Minimal subset Verilog files = 1877 lines
-Everything under "design/" = 11k+ lines
-Now just under 800 lines of Scala.
+By porting the design to SpinalHDL, we reduce the code volume and complexity.
+In the original design, everything under ["design/"](https://github.com/ethanlee515/Helios_scalable_QEC/tree/make-test/design) adds up to over 11k lines.
+Even counting only the minimal subset described above, the files still [add up](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/Makefile#L38-L39) to 1877 lines.
+In contrast, our SpinalHDL implementation is just under 800 lines total.
 
-Scala = more modular and readable. Maintainable. (We hope.)
+More importantly, a Scala-based implementation improves modularity and readability.
+We hope this in turn makes our implementation more maintainable.
+Finally, our idiomatic SpinalHDL interface simplifies future usage as a building block in other SpinalHDL-based efforts.
 
 ## Project Structure
 
-We now assume rudimentary understanding of the union-find based algorithm as described in the (TODO link paper).
-Here we describe our implementation in roughly top-down order.
-* "Helios/src/": Main Helios implementation
+Here we highlight some of our important building blocks, in roughly the top-down order.
+For the theory behind this union-find algorithm, we direct the readers to the [Helios paper](https://arxiv.org/abs/2301.08419).
+* ["Helios/src/"](./Helios/src): Main Helios implementation
   * ["HeliosCore.scala"](./Helios/src/HeliosCore.scala): Top level.
     Instantiates and connects the decoding graph and the state machine ("controller") components.
-    Adapted from TODO.
   * ["Parameters.scala"](./Helios/src/Parameters.scala): Parameters such as the _distance_ of the surface code considered.
-  * ["DecodingGraph.scala"](./Helios/src/DecodingGraph.scala): Decoding graph that represents TODO.
-    Adapted from TODO.
+  * ["DecodingGraph.scala"](./Helios/src/DecodingGraph.scala): Decoding graph that is processed by the union-find algorithm.
     The graph vertices and edges are encoded as follows:
     * ["ProcessingUnit.scala"](./Helios/src/ProcessingUnit.scala): Represents a vertex of the decoding graph.
       Equivalently, an ancilla that stores the measured error syndrome.
-      Adapted from TODO.
     * ["NeighborLink.scala"](./Helios/src/NeighborLink.scala): Represents an edge of the decoding graph.
       Equivalently, a physical qubit of the quantum ECC.
-      Adapted from TODO.
   * ["UnifiedController.scala"](./Helios/src/UnifiedController.scala): State machine for the union-find algorithm.
-    Adapted from TODO.
   * Other utility and miscellaneous files.
-* "Helios/tests/src": Tests
+* ["Helios/test/src"](./Helios/test/src): Test and simulation harnesses
+  * ["Root test"](./Helios/test/src/RootTest.scala): The test borrowed from Helios, as described above.
+    It is labelled as one of the "full tests", though it in fact focuses on the union-find logic and does *not* verify the final Pauli corrections.
+  * ["Corrections test"](./Helios/test/src/CorrectionTest.scala): Checks that the output Pauli corrections match those from the original Helios implementation.
+    We created a simple [SystemVerilog testbench](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/test_benches/full_tests/print_corrections.sv) to log the original Helios output into a [text file](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/test_benches/test_data/corrections.txt).
+    Our "corrections test" then simulates the SpinalHDL port and verifies that the outputs match.
+  * ["Flattened Helios"](./Helios/test/src/FlattenedHeliosCore.scala): A variant of the top-level `HeliosCore` module, where `Vec` fields are unfolded to avoid issues with `simPublic()`.
+  * ["Driver.scala"](./Helios/test/src/Driver.scala): Usage example for how to drive the input stream and observe the output flow.
 
 ## TODO
 
-* Generate a bigger "full test" and make sure the entire experiment still works.
+* Generate test data using a larger code distance, and make sure that nothing starts breaking.
   * Check that the implementation still works when `grid_width_z != 1`
   * Try values of `grid_width_x` and `grid_width_z` that are not powers of two.
     (This might break due to inconsistent uses of bitshifts vs multiplications/modulos.)
 * `meas_in` is taken over multiple rounds. This is asymmetrical from how output is treated.
-  Maybe we can try to take all measurements upfront.
+  Should we take all the measurements upfront?
 * `roots` is a debug signal and shouldn't be output wire.
    The test should just grab it using `simPublic()`.
-* Move edge weights to the parameters file
+* Move edge weights to the parameters file.
