@@ -10,10 +10,6 @@ object Boundary extends Enumeration {
   val no_boundary, a_boundary, nexist_edge = Value
 }
 
-object Command extends SpinalEnum {
-  val start_decoding, measurement_data = newElement()
-}
-
 object HeliosParams {
   val max_weight = 2
   val grid_width_x = 4

@@ -1,5 +1,3 @@
-// Ported from "processing_unit_single_FPGA_v2.v"
-
 import spinal.core._
 import spinal.lib._
 import HeliosParams._
@@ -17,7 +15,7 @@ class ProcessingUnit(address: Int) extends Component {
     in port Vec.fill(neighbor_count)(NeighborsCommunication())
   val to_neighbor =
     out port Vec.fill(neighbor_count)(NeighborsCommunication())
-  val root = out port Reg(UInt(address_width bits))
+  val root = Reg(UInt(address_width bits))
   val odd = out port Reg(Bool())
   val busy = out port Reg(Bool()) init(False)
   /* logic */

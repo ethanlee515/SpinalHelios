@@ -1,5 +1,3 @@
-// Ported from "design/wrappers/single_FPGA_decoding_graph_dynamic_rsc.sv"
-
 import spinal.core._
 import spinal.lib._
 import HeliosParams._
@@ -41,8 +39,6 @@ class DecodingGraph() extends Component {
   val global_stage = in port Stage()
   val odd_clusters =
     out port Vec.fill(grid_width_u, grid_width_x, grid_width_z)(Bool())
-  val roots = out port Vec.fill(
-    grid_width_u, grid_width_x, grid_width_z)(UInt(address_width bits))
   val busy = out port Vec.fill(grid_width_u, grid_width_x, grid_width_z)(Bool())
   val correction = out port Correction()
   /* logic */
@@ -54,7 +50,6 @@ class DecodingGraph() extends Component {
     val pu = new ProcessingUnit(address)
     pu.global_stage := global_stage
     odd_clusters(k)(i)(j) := pu.odd
-    roots(k)(i)(j) := pu.root
     busy(k)(i)(j) := pu.busy
     pu
   }}

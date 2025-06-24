@@ -1,5 +1,3 @@
-// Ported from "design/wrappers/Helios_single_FPGA_core.v"
-
 import spinal.core._
 import spinal.lib._
 import HeliosParams._
@@ -9,8 +7,6 @@ class HeliosCore() extends Component {
   val output = out port Flow(Correction())
   val graph = new DecodingGraph()
   val controller = new UnifiedController()
-  val roots = out port Vec.fill(grid_width_u, grid_width_x, grid_width_z)(
-    UInt(address_width bits))
   controller.meas_in << meas_in
   graph.measurements := controller.measurements
   for(k <- 0 until grid_width_u;
@@ -23,7 +19,6 @@ class HeliosCore() extends Component {
   graph.global_stage := controller.global_stage
   output.payload := graph.correction
   output.valid := controller.output_valid
-  roots := graph.roots
 }
 
 object CompileVerilog extends App {

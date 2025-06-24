@@ -32,9 +32,6 @@ We now sketch how this corresponds to the input and output interfaces of our imp
 
 See an example in ["Driver.scala"](./Helios/test/src/Driver.scala).
 
-Note: The `roots` are not a real output wire.
-That is pending clean-up.
-
 ## Comparison with the Original Helios Implementation
 
 We try to translate the original Verilog/SystemVerilog to SpinalHDL in a wire-by-wire and register-by-register way wherever possible.
@@ -99,6 +96,4 @@ For the theory behind this union-find algorithm, we direct the readers to the [H
     (This might break due to inconsistent uses of bitshifts vs multiplications/modulos.)
 * `meas_in` is taken over multiple rounds. This is asymmetrical from how output is treated.
   Should we take all the measurements upfront?
-* `roots` is a debug signal and shouldn't be output wire.
-   The test should just grab it using `simPublic()`.
 * Move edge weights to the parameters file.

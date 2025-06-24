@@ -1,5 +1,3 @@
-// Ported from "design/stage_controller/control_node_single_FPGA.v"
-
 import spinal.core._
 import spinal.lib._
 import HeliosParams._

@@ -14,6 +14,7 @@ object HeliosDriver {
         j <- 0 until grid_width_z) {
       dut.core.graph.processing_unit(k)(i)(j).busy.simPublic()
       dut.core.graph.processing_unit(k)(i)(j).solver.valids.simPublic()
+      dut.core.graph.processing_unit(k)(i)(j).root.simPublic()
       for(h <- 0 until neighbor_count) {
         dut.core.graph.processing_unit(k)(i)(j).solver.values(h).simPublic()
       }
@@ -109,7 +110,8 @@ class HeliosDriver(dut: FlattenedHelios) {
 
   def read_roots() : Seq[Seq[Seq[Address]]] = {
     Seq.tabulate(grid_width_u, grid_width_x, grid_width_z) { (k, i, j) =>
-      Address(dut.roots(k)(i)(j).toInt)
+      val root = dut.core.graph.processing_unit(k)(i)(j).root
+      Address(root.toInt)
     }
   }
 

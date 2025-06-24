@@ -61,13 +61,4 @@ class FlattenedHelios() extends Component {
     b := core.output.payload.ud(k, i, j)
     (k, i, j) -> b
   }.toMap
-
-  // funny Flow public issue...
-  val roots = Seq.tabulate(
-    grid_width_u, grid_width_x, grid_width_z
-  ) { (k, i, j) =>
-    val rij = out UInt(address_width bits)
-    rij := core.roots(k)(i)(j)
-    rij
-  }
 }

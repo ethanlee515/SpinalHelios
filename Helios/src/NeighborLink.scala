@@ -1,5 +1,3 @@
-// Ported from "neighbor_link_internal_v2.v"
-
 import spinal.core._
 import spinal.lib._
 import HeliosParams._
