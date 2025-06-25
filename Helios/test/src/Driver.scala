@@ -27,15 +27,15 @@ object HeliosDriver {
 
   def parseInput(filename: String) = {
     val lines = Source.fromFile(filename).getLines().toList
-    assert(lines.length == 13000)
-    val shots = Seq.tabulate(1000, 12) { (i, j) =>
-      val line = lines(13 * i + j + 1)
+    assert(lines.length == 16900)
+    val shots = Seq.tabulate(100, 168) { (i, j) =>
+      val line = lines(169 * i + j + 1)
       assert(line == "00000000" || line == "00000001")
       line == "00000001"
     }
     val grids = shots.map(shot => {
-      Seq.tabulate(3, 4, 1) { (k, i, j) =>
-        shot(Address(k, i, j).flatIndex)
+      Seq.tabulate(grid_width_u, grid_width_x, grid_width_z) { (k, i, j) =>
+        shot(Address(k, i, j).index)
       }
     })
     grids
@@ -111,7 +111,7 @@ class HeliosDriver(dut: FlattenedHelios) {
   def read_roots() : Seq[Seq[Seq[Address]]] = {
     Seq.tabulate(grid_width_u, grid_width_x, grid_width_z) { (k, i, j) =>
       val root = dut.core.graph.processing_unit(k)(i)(j).root
-      Address(root.toInt)
+      Address.unpack(root.toInt)
     }
   }
 
@@ -145,18 +145,23 @@ class HeliosDriver(dut: FlattenedHelios) {
 }
 
 case class Address(k: Int, i: Int, j: Int) {
-// println(f"x width = ${x_bit_width}, z width = ${z_bit_width}")
-  def flatIndex = {
-    val res = (k << (x_bit_width + z_bit_width)) + (i << z_bit_width) + j
-    // println(f"flat index of ($k, $i, $j) = $res")
-    res
+  def index = {
+    k * grid_width_x * grid_width_z + i * grid_width_z + j
   }
 }
 
 object Address {
-  def apply(flatIndex: Int) : Address = {
-    val j = flatIndex & ((1 << z_bit_width) - 1)
-    val ki = flatIndex >> z_bit_width
+  def fromIndex(flatIndex: Int) : Address = {
+    val j = flatIndex % grid_width_z
+    val ki = flatIndex / grid_width_z
+    val i = ki % grid_width_x
+    val k = ki / grid_width_x
+    Address(k, i, j)
+  }
+
+  def unpack(packed: Int) : Address = {
+    val j = packed & ((1 << z_bit_width) - 1)
+    val ki = packed >> z_bit_width
     val i = ki & ((1 << x_bit_width) - 1)
     val k = ki >> x_bit_width
     Address(k, i, j)
