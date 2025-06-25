@@ -40,12 +40,22 @@ object HeliosDriver {
     })
     grids
   }
+
+  def syndromeNonzero(shot: Seq[Seq[Seq[Boolean]]]) : Boolean = {
+    for(a <- shot;
+        b <- a;
+        c <- b) {
+          if(c) {
+            return true
+          }
+        }
+    return false
+  }
 }
 
 class HeliosDriver(dut: FlattenedHelios) {
   val cd = dut.clockDomain
   def init() = {
-    // dut.command_valid #= false
     dut.meas_in_valid #= false
     cd.forkStimulus(10)
     cd.assertReset()
@@ -106,6 +116,12 @@ class HeliosDriver(dut: FlattenedHelios) {
     }
     */
     assert(!cd.waitSamplingWhere(1000) { dut.output_valid.toBoolean })
+    /*
+    while(!dut.output_valid.toBoolean) {
+      cd.waitSampling()
+      log_solver_valids()
+    }
+    */
   }
 
   def read_roots() : Seq[Seq[Seq[Address]]] = {

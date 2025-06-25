@@ -64,7 +64,7 @@ class DecodingGraph() extends Component {
       else
         processing_unit(k + 1)(i)(j).measurement_out
     }
-  } 
+  }
   // Setting up neighbors
   def neighbor_link_0(
       is_error_out: Bool,
