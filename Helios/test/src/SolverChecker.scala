@@ -47,7 +47,7 @@ class SolverChecker extends Component {
   reference.values := values
   reference.valids := valids
   val valids_eqs = Vec.tabulate(channel_count) { i =>
-    solver.valids(i) & reference.output_valids(i)
+    solver.valids(i) === reference.output_valids(i)
   }
   val valids_all_eq = valids_eqs.asBits.andR
   val res_eq = solver.result === reference.result
