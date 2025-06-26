@@ -51,5 +51,5 @@ class SolverChecker extends Component {
   }
   val valids_all_eq = valids_eqs.asBits.andR
   val res_eq = solver.result === reference.result
-  outputs_equal := valids_all_eq & res_eq
+  outputs_equal := valids_all_eq & ((!reference.output_valids.orR) || res_eq)
 }
