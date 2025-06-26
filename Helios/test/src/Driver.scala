@@ -27,9 +27,9 @@ object HeliosDriver {
 
   def parseInput(filename: String) = {
     val lines = Source.fromFile(filename).getLines().toList
-    assert(lines.length == 16900)
-    val shots = Seq.tabulate(100, 168) { (i, j) =>
-      val line = lines(169 * i + j + 1)
+    assert(lines.length == 100 * (grid_size + 1))
+    val shots = Seq.tabulate(100, grid_size) { (i, j) =>
+      val line = lines((grid_size + 1) * i + j + 1)
       assert(line == "00000000" || line == "00000001")
       line == "00000001"
     }

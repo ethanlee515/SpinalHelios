@@ -1,7 +1,7 @@
 import spinal.core._
 
 object HeliosParams {
-  val code_distance = 7
+  val code_distance = 5
   val iteration_counter_width = 8
   val max_delay = 3
   val neighbor_count = 6
@@ -13,6 +13,7 @@ object HeliosParams {
   val grid_width_x = code_distance + 1
   val grid_width_z = code_distance / 2
   val grid_width_u = code_distance
+  val grid_size = grid_width_u * grid_width_x * grid_width_z
   val x_bit_width = log2Up(grid_width_x)
   val z_bit_width = log2Up(grid_width_z)
   val u_bit_width = log2Up(grid_width_u)

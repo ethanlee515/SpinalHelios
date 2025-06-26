@@ -9,7 +9,6 @@ import spinal.core.assert
 object SolverTest extends TestSuite {
   def tests = Tests {
     test("Checking tree solver using SymbiYosys") {
-      import spinal.core.formal._
       FormalConfig.withBMC(2).doVerify(new Component {
         val dut = FormalDut(new SolverChecker())
         anyconst(dut.values)
