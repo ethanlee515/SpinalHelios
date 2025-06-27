@@ -1,5 +1,10 @@
+import utest._
+import HeliosParams._
 import spinal.core._
 import spinal.lib._
+import spinal.core.sim._
+import spinal.core.formal._
+import spinal.core.assert
 
 object SolverParams {
   val data_width = 8
@@ -52,4 +57,17 @@ class SolverChecker extends Component {
   val valids_all_eq = valids_eqs.asBits.andR
   val res_eq = solver.result === reference.result
   outputs_equal := valids_all_eq & ((!reference.output_valids.orR) || res_eq)
+}
+
+object SolverTest extends TestSuite {
+  def tests = Tests {
+    test("Checking tree solver using SymbiYosys") {
+      FormalConfig.withBMC(2).doVerify(new Component {
+        val dut = FormalDut(new SolverChecker())
+        anyconst(dut.values)
+        anyconst(dut.valids)
+        assert(dut.outputs_equal)
+      })
+    }
+  }
 }
