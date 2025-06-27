@@ -5,6 +5,7 @@ import HeliosParams._
 import spinal.core.sim._
 import spinal.core.formal._
 import spinal.core.assert
+import ReferenceParams._
 
 class BoxedLink extends BlackBox {
   val link_bit_width = log2Up(max_weight + 1)
@@ -69,14 +70,6 @@ class LinkEquivalenceChecker(boundary: Boundary.Value) extends Component {
   } otherwise {
     switch(global_stage) {
       // reference
-      val reference_stage_ids = Map(
-        Stage.measurement_loading -> 1,
-        Stage.grow -> 2,
-        Stage.merge -> 3,
-        Stage.peeling -> 4,
-        Stage.result_valid -> 5,
-        Stage.measurement_preparing -> 7
-      )
       for((stage, stage_id) <- reference_stage_ids) {
         is(stage) {
           reference.io.global_stage := B(stage_id)
