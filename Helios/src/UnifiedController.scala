@@ -3,12 +3,11 @@ import spinal.lib._
 import HeliosParams._
 
 class UnifiedController() extends Component {
-  val pu_count = grid_width_x * grid_width_z * grid_width_u
   /* IO and states */
   val global_stage = out port Reg(Stage()) init(Stage.measurement_preparing)
   val global_stage_previous = Reg(Stage()) init(Stage.measurement_preparing)
-  val odd_clusters_PE = in port Bits(pu_count bits)
-  val busy_PE = in port Bits(pu_count bits)
+  val odd_clusters_PE = in port Bits(grid_size bits)
+  val busy_PE = in port Bits(grid_size bits)
   val measurements =
     out port Reg(Vec.fill(grid_width_x, grid_width_z)(Bool()))
   // rewriting input as streams backed by registers

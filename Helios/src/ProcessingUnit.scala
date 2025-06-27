@@ -178,7 +178,6 @@ class ProcessingUnit(address: Int) extends Component {
   val neighbor_is_error_border = Reg(Bits(neighbor_count bits))
   neighbor_is_error_border := (
     stage === Stage.peeling && !child_incomplete && odd) ?
-    // TODO double check bit order; `last` or `first`
     OHMasking.last(neighbor_is_boundary) | B(0)
   neighbor_is_error := neighbor_is_error_internal | neighbor_is_error_border
 

@@ -6,22 +6,19 @@ class NeighborLink(
   weight: Int,
   boundary_condition: Boundary.Value
 ) extends Component {
-  // `+ 1` to store from 0 to max_weight *inclusive*
-  val link_bit_width = log2Up(max_weight + 1)
+  assert(weight <= max_weight)
   /* IO */
   val global_stage = in port Stage()
   val fully_grown = out Bool()
-  val a_increase = in Bool()
-  val b_increase = in Bool()
+  val a_increase, b_increase = in Bool()
   val is_boundary = out Bool()
-  val a_is_error = in Bool()
-  val b_is_error = in Bool()
+  val a_is_error, b_is_error = in Bool()
   val is_error = out port Reg(Bool()) init(False)
-  val a_input_data = in port NeighborsCommunication()
-  val b_input_data = in port NeighborsCommunication()
-  val a_output_data = out port NeighborsCommunication()
-  val b_output_data = out port NeighborsCommunication()
+  val a_input_data, b_input_data = in port NeighborsCommunication()
+  val a_output_data, b_output_data = out port NeighborsCommunication()
   /* states */
+  // `+ 1` to store from 0 to max_weight *inclusive*
+  val link_bit_width = log2Up(max_weight + 1)
   val growth = Reg(UInt(link_bit_width bits)) init(0)
   /* logic */
   // compute growth
@@ -37,14 +34,17 @@ class NeighborLink(
       s := 0
     }
   }
+  val growth_new = Reg(UInt(link_bit_width bits))
+  when(s > weight) {
+    growth_new := weight
+  } otherwise {
+    growth_new := s.resized
+  }
+
   when(global_stage === Stage.measurement_loading) {
     growth := 0
   } otherwise {
-    when(s > weight) {
-      growth := weight
-    } otherwise {
-      growth := s.resized
-    }
+    growth := growth_new
   }
   // compute is_error
   boundary_condition match {

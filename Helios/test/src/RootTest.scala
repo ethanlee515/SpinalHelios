@@ -51,8 +51,7 @@ object RootTest extends TestSuite {
       }.doSim { dut =>
         val driver = new HeliosDriver(dut)
         driver.init()
-        var difference_count = 0
-        var nonzero_count = 0
+        /*
         for(i <- 0 until input_data.length) {
           val shot = input_data(i)
           driver.do_shot(shot)
@@ -60,6 +59,8 @@ object RootTest extends TestSuite {
           // println(f"roots = $roots")
           // println(f"output(${i}) = ${output_data(i)}")
           // assert(roots == output_data(i))
+          println(f"i = $i")
+          assert(roots == output_data(i))
           if(roots != output_data(i)) {
             difference_count = difference_count + 1
           }
@@ -67,14 +68,12 @@ object RootTest extends TestSuite {
             nonzero_count = nonzero_count + 1
           }
         }
-        println(f"difference count = ${difference_count}")
-        println(f"nonzero count = ${nonzero_count}")
-        /*
-        println(f"input(1) = ${input_data(1)}")
-        println(f"expected output(1) = ${output_data(1)}")
-        driver.do_shot(input_data(1))
-        println(f"actual output(1) = ${driver.read_roots()}")
         */
+        println(f"input(4) = ${input_data(4)}")
+        println(f"expected output(4) = ${output_data(4)}")
+        driver.do_shot(input_data(4))
+        println(f"actual output(4) = ${driver.read_roots()}")
+        assert(driver.read_roots() == output_data(4))
         /*
         println(f"input = ${input_data(2)}")
         val expected = output_data(3)
