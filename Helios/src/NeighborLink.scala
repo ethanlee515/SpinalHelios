@@ -34,7 +34,7 @@ class NeighborLink(
       s := 0
     }
   }
-  val growth_new = Reg(UInt(link_bit_width bits))
+  val growth_new = UInt(link_bit_width bits)
   when(s > weight) {
     growth_new := weight
   } otherwise {
