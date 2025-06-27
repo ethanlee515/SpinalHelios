@@ -21,7 +21,7 @@ class BoxedSolver extends BlackBox {
     val output_valids = out port Bits(channel_count bits)
   }
   noIoPrefix()
-  addRTLPath("./ext/Helios_scalable_QEC/design/generics/tree_compare_solver.sv")
+  addRTLPath("./ext/Helios_scalable_QEC/design/tree_compare_solver.sv")
   setBlackBoxName("min_val_less_8x_with_index")
 }
 

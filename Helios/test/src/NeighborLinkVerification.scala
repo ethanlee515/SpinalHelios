@@ -27,8 +27,8 @@ class BoxedLink extends BlackBox {
   mapCurrentClockDomain(io.clk, io.reset)
   addGeneric("ADDRESS_WIDTH", address_width)
   noIoPrefix()
-  addRTLPath("./ext/Helios_scalable_QEC/design/channels/neighbor_link_internal_v2.v")
-  addRTLPath("./ext/Helios_scalable_QEC/parameters/parameters.sv")
+  addRTLPath("./ext/Helios_scalable_QEC/design/neighbor_link_internal_v2.v")
+  addRTLPath("./ext/Helios_scalable_QEC/design/parameters.sv")
   setBlackBoxName("neighbor_link_internal")
 }
 
