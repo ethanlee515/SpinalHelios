@@ -170,11 +170,12 @@ class ProcessingUnit(address: Int) extends Component {
   }
 
   // Calculate `neighbor_is_error`
-  val neighbor_is_error_internal = Reg(Bits(neighbor_count bits))
+  // But these are not "real" regs, are they?
+  val neighbor_is_error_internal = Bits(neighbor_count bits)
   neighbor_is_error_internal := (
     stage === Stage.peeling && !child_incomplete) ?
     (neighbor_parent_vector & child_peeling_m) | B(0)
-  val neighbor_is_error_border = Reg(Bits(neighbor_count bits))
+  val neighbor_is_error_border = Bits(neighbor_count bits)
   neighbor_is_error_border := (
     stage === Stage.peeling && !child_incomplete && odd) ?
     OHMasking.last(neighbor_is_boundary) | B(0)

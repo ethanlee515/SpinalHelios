@@ -52,15 +52,23 @@ object CorrectionTest extends TestSuite {
       }.doSim { dut =>
         val driver = new HeliosDriver(dut)
         driver.init()
+        var bad_count = 0
         for(s <- 0 until input_data.length) {
+          var bad_found = false
           driver.do_shot(input_data(s))
           for(k <- 0 until grid_width_u;
               i <- 0 until corrections_per_layer) {
             val expected_corr = output_data(s)(k)(i)
             val corr = driver.getCorrection(k, i).toBoolean
-            assert(corr == expected_corr)
+            // TODO count it up again?
+            if(corr != expected_corr && !bad_found) {
+              bad_found = true
+              bad_count += 1
+            }
           }
         }
+        println(f"number of bad correction shots = ${bad_count}")
+        assert(bad_count == 0)
       } 
     }
   }

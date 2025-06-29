@@ -40,10 +40,12 @@ class UnitEquivChecker extends Component {
   val neighbor_is_boundary = in Bits(neighbor_count bits)
   val from_neighbor =
     in port Vec.fill(neighbor_count)(NeighborsCommunication())
-  // output eqs
+  // constraints
   val cycles = out port Reg(UInt(8 bits)) init(0)
   cycles := cycles + 1
   val s = (cycles === 0) ? Stage.measurement_loading | global_stage
+  val output_done = out port Reg(Bool()) init(False)
+  // outputs
   val meas_out_eq, neighbor_inc_eq, neighbor_err_eq, to_neighbor_eq, odd_eq, busy_eq = out Bool()
   // instantiate
   val address = 0b01011010
@@ -61,6 +63,9 @@ class UnitEquivChecker extends Component {
     }
   }
   unit.global_stage := s
+  when(unit.global_stage === Stage.result_valid) {
+    output_done := True
+  }
   reference.io.neighbor_fully_grown := neighbor_fully_grown
   unit.neighbor_fully_grown := neighbor_fully_grown
   reference.io.neighbor_is_boundary := neighbor_is_boundary
@@ -84,23 +89,26 @@ class UnitVerifier extends Component {
   anyseq(dut.neighbor_fully_grown)
   anyseq(dut.neighbor_is_boundary)
   anyseq(dut.from_neighbor)
+  // Valid stages
+  assume(Stage.elements.map(dut.global_stage === _).reduce(_ || _))
+  //assume(dut.global_stage =/= Stage.result_valid)
   // assertions
-  // assert(dut.meas_out_eq)
-  // assert((dut.cycles <= 2) || dut.neighbor_inc_eq)
-  // assert((dut.cycles <= 2) || dut.neighbor_err_eq)
-  // assert((dut.cycles <= 2) || dut.to_neighbor_eq)
-  // assert((dut.cycles <= 2) || dut.odd_eq)
-  // assert((dut.cycles <= 2) || dut.busy_eq)
+  // these are fine
+  assert(dut.meas_out_eq)
+  assert((dut.cycles <= 2) || dut.odd_eq)
+  assert((dut.cycles <= 2) || dut.busy_eq)
+  assert((dut.cycles <= 2) || dut.neighbor_inc_eq)
+  assert((dut.cycles <= 2) || dut.neighbor_err_eq)
+  // below are strange
+//  assert((dut.cycles <= 2) || dut.to_neighbor_eq)
+
   // TODO constraint stages for more experimenting?
-  /*
-  assume(dut.global_stage === Stage.measurement_loading ||
-    dut.global_stage === Stage.merge)
-    */
+  // temporary assumptions for debugging
   // assume(dut.unit.parent_vector =/= B(0))
   //assume(!(dut.unit.solver.valids.orR))
+//  assume(dut.global_stage =/= Stage.peeling)
 }
 
-/*
 object ProcessingUnitTest extends TestSuite {
   def tests = Tests {
     test("Formally verifying processing unit") {
@@ -108,4 +116,3 @@ object ProcessingUnitTest extends TestSuite {
     }
   }
 }
-*/
