@@ -5,7 +5,7 @@ import HeliosParams._
 import spinal.core.sim._
 import spinal.core.formal._
 import spinal.core.assert
-import ReferenceParams._
+import TestParams._
 
 class BoxedUnit(address: Int) extends BlackBox {
   val io = new Bundle {

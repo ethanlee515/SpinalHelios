@@ -5,14 +5,15 @@ import spinal.core._
 import spinal.lib._
 import spinal.core.sim._
 import utest.assert
+import TestParams._
 
 object CorrectionTest extends TestSuite {
   val input_filename =
-    "ext/Helios_scalable_QEC/test_benches/test_data/input_data_7_rsc.txt"
+    f"ext/Helios_scalable_QEC/test_benches/test_data/input_data_${code_distance}_rsc.txt"
   val output_filename =
-    "ext/Helios_scalable_QEC/test_benches/test_data/corrections.txt"
+    f"ext/Helios_scalable_QEC/test_benches/test_data/corrections_${code_distance}.txt"
 
-  // val input_data = HeliosDriver.parseInput(input_filename)
+  val input_data = HeliosDriver.parseInput(input_filename)
 
   val ns_len = (grid_width_x - 1) * grid_width_z
   val ew_len = (grid_width_x - 1) * grid_width_z + 1
@@ -20,32 +21,30 @@ object CorrectionTest extends TestSuite {
   val corrections_per_layer = ns_len + ew_len + ud_len
 
   def parseOutputLine(line: String) : Seq[Boolean] = {
-    val v = Integer.parseInt(line.trim, 16)
+    val v = BigInt(line.trim, 16)
     Seq.tabulate(corrections_per_layer) {i =>
       (v >> i) == 1
     }
   }
 
   def parseOutputShot(shot: Seq[String]) : Seq[Seq[Boolean]] = {
-    assert(shot.length == 3)
+    assert(shot.length == grid_width_u)
     shot.map(parseOutputLine)
   }
 
   def parseOutput(filename: String) = {
     val lines = Source.fromFile(filename).getLines().toList
-    assert(lines.length == 3000)
-    val shots = Seq.tabulate(1000, 3) { (i, j) =>
-      lines(3 * i + j)
+    assert(lines.length == num_shots * grid_width_u)
+    val shots = Seq.tabulate(num_shots, grid_width_u) { (i, j) =>
+      lines(grid_width_u * i + j)
     }
     shots.map(parseOutputShot)
   }
-  
-  // indices: (shot, layer, flattened x-z)
-  // val output_data : Seq[Seq[Seq[Boolean]]] = parseOutput(output_filename)
+
+  val output_data = parseOutput(output_filename)
 
   def tests = Tests {
     test("checking corrections against test data") {
-      /*
       SimConfig.compile {
         val dut = new FlattenedHelios
         HeliosDriver.simPublics(dut)
@@ -63,7 +62,6 @@ object CorrectionTest extends TestSuite {
           }
         }
       } 
-    */
     }
   }
 }
