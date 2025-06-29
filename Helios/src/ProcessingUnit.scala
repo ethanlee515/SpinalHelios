@@ -5,7 +5,7 @@ import HeliosParams._
 class ProcessingUnit(address: Int) extends Component {
   /* IO */
   val measurement = in Bool()
-  val measurement_out = out Bool()
+  val measurement_out = out port Reg(Bool()) init(False)
   val global_stage = in port Stage()
   val neighbor_fully_grown = in Bits(neighbor_count bits)
   val neighbor_increase = out Bool()
@@ -55,12 +55,9 @@ class ProcessingUnit(address: Int) extends Component {
   val last_stage = Reg(Stage()) init(Stage.measurement_preparing)
   stage := global_stage
   last_stage := stage
-  // `measurement_out` is also backed by register
-  val m = Reg(Bool()) init(False)
   when(stage === Stage.measurement_loading) {
-    m := measurement
+    measurement_out := measurement
   }
-  measurement_out := m
   neighbor_increase :=
     odd && (stage === Stage.grow) && (last_stage =/= Stage.grow)
   // solver stuff
@@ -83,9 +80,11 @@ class ProcessingUnit(address: Int) extends Component {
     }
   }
   // "Calculate the sub-tree parity and sub_tree touching boundary"
-  val v = neighbor_parent_vector & child_cluster_parity
-  val next_cluster_parity = v.xorR ^ m
-  val next_cluster_touching_boundary = v.orR || neighbor_is_boundary.orR
+  val next_cluster_parity =
+    (neighbor_parent_vector & child_cluster_parity).xorR ^ measurement_out
+  val next_cluster_touching_boundary =
+    (neighbor_parent_vector & child_touching_boundary).orR ||
+    neighbor_is_boundary.orR
   switch(stage) {
     is(Stage.measurement_loading) {
       cluster_parity := measurement
@@ -166,7 +165,7 @@ class ProcessingUnit(address: Int) extends Component {
     peeling_m := False
   } otherwise {
     when(stage === Stage.peeling && !child_incomplete) {
-      peeling_m := m ^ ((neighbor_parent_vector & child_peeling_m).xorR) ^ odd
+      peeling_m := measurement_out ^ ((neighbor_parent_vector & child_peeling_m).xorR) ^ odd
     }
   }
 

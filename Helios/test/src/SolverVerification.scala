@@ -42,15 +42,17 @@ class SolverChecker extends Component {
   outputs_equal := valids_all_eq & ((!solver.valids.orR) || res_eq)
 }
 
+class SolverVerifier extends Component {
+  val dut = FormalDut(new SolverChecker())
+  anyconst(dut.values)
+  anyconst(dut.valids)
+  assert(dut.outputs_equal)
+}
+
 object SolverTest extends TestSuite {
   def tests = Tests {
     test("Checking tree solver using SymbiYosys") {
-      FormalConfig.withBMC(15).doVerify(new Component {
-        val dut = FormalDut(new SolverChecker())
-        anyconst(dut.values)
-        anyconst(dut.valids)
-        assert(dut.outputs_equal)
-      })
+      FormalConfig.withBMC(15).doVerify{ new SolverVerifier }
     }
   }
 }
