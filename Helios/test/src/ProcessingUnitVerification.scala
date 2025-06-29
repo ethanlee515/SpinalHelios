@@ -91,22 +91,13 @@ class UnitVerifier extends Component {
   anyseq(dut.from_neighbor)
   // Valid stages
   assume(Stage.elements.map(dut.global_stage === _).reduce(_ || _))
-  //assume(dut.global_stage =/= Stage.result_valid)
   // assertions
-  // these are fine
   assert(dut.meas_out_eq)
   assert((dut.cycles <= 2) || dut.odd_eq)
   assert((dut.cycles <= 2) || dut.busy_eq)
   assert((dut.cycles <= 2) || dut.neighbor_inc_eq)
   assert((dut.cycles <= 2) || dut.neighbor_err_eq)
-  // below are strange
-//  assert((dut.cycles <= 2) || dut.to_neighbor_eq)
-
-  // TODO constraint stages for more experimenting?
-  // temporary assumptions for debugging
-  // assume(dut.unit.parent_vector =/= B(0))
-  //assume(!(dut.unit.solver.valids.orR))
-//  assume(dut.global_stage =/= Stage.peeling)
+  assert((dut.cycles <= 2) || dut.to_neighbor_eq)
 }
 
 object ProcessingUnitTest extends TestSuite {

@@ -162,7 +162,7 @@ class ProcessingUnit(address: Int) extends Component {
   }
   // "If peeling complete, absorb children's m while marking the errors"
   when(stage === Stage.peeling && last_stage =/= Stage.peeling) {
-    peeling_m := False
+    peeling_m := measurement_out
   } otherwise {
     when(stage === Stage.peeling && !child_incomplete) {
       peeling_m := measurement_out ^ ((neighbor_parent_vector & child_peeling_m).xorR) ^ odd
