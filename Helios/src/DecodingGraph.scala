@@ -182,7 +182,7 @@ class DecodingGraph() extends Component {
       link_single(i, j, k, NeighborID.down, Boundary.a_boundary)
     } else if(k == grid_width_u) {
       link_single(i, j, k - 1, NeighborID.up, Boundary.nexist_edge)
-    } else if(k < grid_width_u) { // TODO isn't this always true now?
+    } else {
       link_0(i, j, k - 1, i, j, k, NeighborID.up, NeighborID.down)
     }
   }}

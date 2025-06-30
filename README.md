@@ -59,7 +59,7 @@ The two stages are therefore combined, and the [message framing headers](https:/
 By porting the design to SpinalHDL, we reduce the code volume and complexity.
 In the original design, everything under ["design/"](https://github.com/ethanlee515/Helios_scalable_QEC/tree/make-test/design) adds up to over 11k lines.
 Even counting only the minimal subset described above, the files still [add up](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/Makefile#L38-L39) to 1877 lines.
-In contrast, our SpinalHDL implementation is just under 800 lines total.
+In contrast, our SpinalHDL implementation is under 800 lines total.
 
 More importantly, a Scala-based implementation improves modularity and readability.
 We hope this in turn makes our implementation more maintainable.

@@ -170,7 +170,6 @@ class ProcessingUnit(address: Int) extends Component {
   }
 
   // Calculate `neighbor_is_error`
-  // But these are not "real" regs, are they?
   val neighbor_is_error_internal = Bits(neighbor_count bits)
   neighbor_is_error_internal := (
     stage === Stage.peeling && !child_incomplete) ?
