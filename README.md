@@ -70,23 +70,22 @@ Finally, our idiomatic SpinalHDL interface simplifies future usage as a building
 Here we highlight some of our important building blocks, in roughly the top-down order.
 For the theory behind this union-find algorithm, we direct the readers to the [Helios paper](https://arxiv.org/abs/2301.08419).
 * ["Helios/src/"](./Helios/src): Main Helios implementation
-  * ["HeliosCore.scala"](./Helios/src/HeliosCore.scala): Top level.
+  * ["Helios Core"](./Helios/src/HeliosCore.scala): Top level.
     Instantiates and connects the decoding graph and the state machine ("controller") components.
-  * ["Parameters.scala"](./Helios/src/Parameters.scala): Parameters such as the _distance_ of the surface code considered.
-  * ["DecodingGraph.scala"](./Helios/src/DecodingGraph.scala): Decoding graph that is processed by the union-find algorithm.
+  * ["Parameters"](./Helios/src/Parameters.scala): Parameters such as the _distance_ of the surface code considered.
+  * ["Decoding Graph"](./Helios/src/DecodingGraph.scala): Decoding graph that is processed by the union-find algorithm.
     The graph vertices and edges are encoded as follows:
-    * ["ProcessingUnit.scala"](./Helios/src/ProcessingUnit.scala): Represents a vertex of the decoding graph.
+    * ["Processing Unit"](./Helios/src/ProcessingUnit.scala): Represents a vertex of the decoding graph.
       Equivalently, an ancilla that stores the measured error syndrome.
-    * ["NeighborLink.scala"](./Helios/src/NeighborLink.scala): Represents an edge of the decoding graph.
+    * ["Neighbor Link"](./Helios/src/NeighborLink.scala): Represents an edge of the decoding graph.
       Equivalently, a physical qubit of the quantum ECC.
-  * ["UnifiedController.scala"](./Helios/src/UnifiedController.scala): State machine for the union-find algorithm.
+  * ["Controller"](./Helios/src/UnifiedController.scala): State machine for the union-find algorithm.
   * Other utility and miscellaneous files.
-* ["Helios/test/src"](./Helios/test/src): Simulations of our Helios core, and tests against expected outputs.
+* ["Helios/test/src/"](./Helios/test/src): Simulations of our Helios core, and tests against expected outputs.
   * ["Root test"](./Helios/test/src/RootTest.scala): The test borrowed from Helios, as described above.
     It is labelled as one of the "full tests", though it in fact focuses on the union-find logic and does *not* verify the final Pauli corrections.
   * ["Corrections test"](./Helios/test/src/CorrectionTest.scala): Checks that the output Pauli corrections match those from the original Helios implementation.
     We created a simple [SystemVerilog testbench](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/test_benches/full_tests/print_corrections.sv) to log the original Helios output into a [text file](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/test_benches/test_data/corrections_7.txt).
     Our "corrections test" then simulates the SpinalHDL port and verifies that the outputs match.
-  * ["Flattened Helios"](./Helios/test/src/FlattenedHeliosCore.scala): A variant of the top-level `HeliosCore` module, where `Vec` fields are unfolded to avoid issues with `simPublic()`.
-  * ["Driver.scala"](./Helios/test/src/Driver.scala): Usage example for how to drive the input stream and observe the output flow.
+  * ["Driver"](./Helios/test/src/Driver.scala): Usage example for how to drive the input stream and observe the output flow.
   * ["formal-verification/"](./Helios/test/src/formal-verification/): Formally verifying the equivalence between our building blocks and those of the original Helios.
