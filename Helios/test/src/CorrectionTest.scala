@@ -21,9 +21,10 @@ object CorrectionTest extends TestSuite {
   val corrections_per_layer = ns_len + ew_len + ud_len
 
   def parseOutputLine(line: String) : Seq[Boolean] = {
+    assert(line.length == (corrections_per_layer + 3) / 4)
     val v = BigInt(line.trim, 16)
     Seq.tabulate(corrections_per_layer) {i =>
-      (v >> i) == 1
+      ((v >> i) & 1) == 1
     }
   }
 
