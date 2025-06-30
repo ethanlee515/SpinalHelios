@@ -1,7 +1,7 @@
 import spinal.core._
 
 object HeliosParams {
-  val code_distance = 5
+  val code_distance = 7
   val iteration_counter_width = 8
   val max_delay = 3
   val neighbor_count = 6

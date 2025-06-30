@@ -1,25 +1,22 @@
 # SpinalHDL Port of ["Helios"](https://github.com/NamiLiy/Helios_scalable_QEC) Quantum Error Correction
 
-**NOTE: STILL DEBUGGING**
-
 Usage:
 * `./mill Helios.runMain CompileVerilog`: Output Verilog as "./HeliosCore.v"
 * `./mill Helios.test`: Run the following tests using the [utest](https://github.com/com-lihaoyi/utest) framework.
     1. The ["root test"](./Helios/test/src/RootTest.scala): Checks that the union find algorithm works as intended.
     This test is ported from what was labelled as ["full test"](https://github.com/ethanlee515/Helios_scalable_QEC/blob/make-test/test_benches/full_tests/single_FPGA_FIFO_verification_test_rsc.sv) in the original Verilog implementation of Helios.
     1. The ["correction test"](./Helios/test/src/CorrectionTest.scala): Checks that the output Pauli corrections matches that of the original Verilog implementation.
-    1. Solver test based on SymbiYosis: TODO describe
+    1. Formal verification using SymbiYosys
 
 ## Prerequisites
 
 This is tested on WSL Ubuntu, and will most likely run on any reasonable Linux.
 Should be straightforward to adapt for other operating systems as well.
 
-Requires a reasonably recent version of JDK and Verilator.
+Requires a reasonably recent version of JDK.
+Verilator and SymbiYosys are also required.
 In particular, Scala or Mill is not required;
 the `./mill` wrapper script takes care of that.
-
-TODO also need SymbiYosis now...
 
 ## Interfaces and Handshakes
 
@@ -84,7 +81,7 @@ For the theory behind this union-find algorithm, we direct the readers to the [H
       Equivalently, a physical qubit of the quantum ECC.
   * ["UnifiedController.scala"](./Helios/src/UnifiedController.scala): State machine for the union-find algorithm.
   * Other utility and miscellaneous files.
-* ["Helios/test/src"](./Helios/test/src): Test and simulation harnesses
+* ["Helios/test/src/unit-tests"](./Helios/test/src): Simulating our Helios core, and checking against expected outputs.
   * ["Root test"](./Helios/test/src/RootTest.scala): The test borrowed from Helios, as described above.
     It is labelled as one of the "full tests", though it in fact focuses on the union-find logic and does *not* verify the final Pauli corrections.
   * ["Corrections test"](./Helios/test/src/CorrectionTest.scala): Checks that the output Pauli corrections match those from the original Helios implementation.
@@ -92,8 +89,4 @@ For the theory behind this union-find algorithm, we direct the readers to the [H
     Our "corrections test" then simulates the SpinalHDL port and verifies that the outputs match.
   * ["Flattened Helios"](./Helios/test/src/FlattenedHeliosCore.scala): A variant of the top-level `HeliosCore` module, where `Vec` fields are unfolded to avoid issues with `simPublic()`.
   * ["Driver.scala"](./Helios/test/src/Driver.scala): Usage example for how to drive the input stream and observe the output flow.
-
-## TODO
-
-* `meas_in` is taken over multiple rounds. This is asymmetrical from how output is treated.
-  Should we take all the measurements upfront?
+* ["Helios/test/src/formal-verification"](./Helios/test/src/formal-verification/): Formally verifying equivalence between our building blocks and those of the original Helios using SymbiYosys.
