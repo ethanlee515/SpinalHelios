@@ -81,7 +81,7 @@ For the theory behind this union-find algorithm, we direct the readers to the [H
       Equivalently, a physical qubit of the quantum ECC.
   * ["UnifiedController.scala"](./Helios/src/UnifiedController.scala): State machine for the union-find algorithm.
   * Other utility and miscellaneous files.
-* ["Helios/test/src/unit-tests"](./Helios/test/src): Simulations of our Helios core, and tests against expected outputs.
+* ["Helios/test/src"](./Helios/test/src): Simulations of our Helios core, and tests against expected outputs.
   * ["Root test"](./Helios/test/src/RootTest.scala): The test borrowed from Helios, as described above.
     It is labelled as one of the "full tests", though it in fact focuses on the union-find logic and does *not* verify the final Pauli corrections.
   * ["Corrections test"](./Helios/test/src/CorrectionTest.scala): Checks that the output Pauli corrections match those from the original Helios implementation.
@@ -89,4 +89,4 @@ For the theory behind this union-find algorithm, we direct the readers to the [H
     Our "corrections test" then simulates the SpinalHDL port and verifies that the outputs match.
   * ["Flattened Helios"](./Helios/test/src/FlattenedHeliosCore.scala): A variant of the top-level `HeliosCore` module, where `Vec` fields are unfolded to avoid issues with `simPublic()`.
   * ["Driver.scala"](./Helios/test/src/Driver.scala): Usage example for how to drive the input stream and observe the output flow.
-* ["Helios/test/src/formal-verification"](./Helios/test/src/formal-verification/): Formally verifying the equivalence between our building blocks and those of the original Helios.
+  * ["formal-verification/"](./Helios/test/src/formal-verification/): Formally verifying the equivalence between our building blocks and those of the original Helios.
