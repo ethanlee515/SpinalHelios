@@ -197,7 +197,6 @@ class DecodingGraph() extends Component {
       j <- 0 until grid_width_z) {
     correction.ew(k, i, j) := ew(k)(i)(j).is_error_out
   }
-
   for(k <- 0 until grid_width_u) {
     correction.ew(k, grid_width_x - 1, grid_width_z) :=
       ew(k)(grid_width_x - 1)(grid_width_z).is_error_out

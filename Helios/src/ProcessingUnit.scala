@@ -168,7 +168,6 @@ class ProcessingUnit(address: Int) extends Component {
       peeling_m := measurement_out ^ ((neighbor_parent_vector & child_peeling_m).xorR) ^ odd
     }
   }
-
   // Calculate `neighbor_is_error`
   val neighbor_is_error_internal = Bits(neighbor_count bits)
   neighbor_is_error_internal :=
@@ -179,7 +178,6 @@ class ProcessingUnit(address: Int) extends Component {
     (stage === Stage.peeling && !child_incomplete && odd) ?
     OHMasking.last(neighbor_is_boundary) | B(0)
   neighbor_is_error := neighbor_is_error_internal | neighbor_is_error_border
-
   // Calculate `busy`
   switch(stage) {
     is(Stage.merge) {

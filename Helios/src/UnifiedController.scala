@@ -5,7 +5,6 @@ import HeliosParams._
 class UnifiedController() extends Component {
   /* IO and states */
   val global_stage = out port Reg(Stage()) init(Stage.measurement_preparing)
-  val global_stage_previous = Reg(Stage()) init(Stage.measurement_preparing)
   val odd_clusters_PE = in port Bits(grid_size bits)
   val busy_PE = in port Bits(grid_size bits)
   val measurements =
@@ -31,7 +30,6 @@ class UnifiedController() extends Component {
       cycle_counter := cycle_counter + U(1)
     }
   }
-  global_stage_previous := global_stage
   val delay_counter = Reg(UInt(log2Up(max_delay + 1) bits)) init(0)
   val measurement_rounds = Reg(UInt(16 bits)) init(0)
   switch(global_stage) {
