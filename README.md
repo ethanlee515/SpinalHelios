@@ -10,12 +10,16 @@ Usage:
 
 ## Prerequisites
 
-This is tested on WSL Ubuntu, and will most likely run on any reasonable Linux.
-Should be straightforward to adapt for other operating systems as well.
+We provide a "Dev Container" for simple and reproducible builds using Docker and VSCode.
 
-Requires a reasonably recent version of JDK.
-Verilator and SymbiYosys are also required.
-In particular, Scala or Mill is not required;
+To build from scratch instead, this is tested on WSL Ubuntu, and will most likely run on any reasonable Linux.
+Should be straightforward to adapt for other operating systems as well.
+The dependencies are:
+* A reasonably recent version of JDK, for Mill and Scala.
+* `curl`, which is used by the Mill wrapper as well.
+* Verilator and SymbiYosys, which comes with the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build).
+* `g++`, which Verilator depends on.
+In particular, Scala or Mill itself is not required;
 the `./mill` wrapper script takes care of that.
 
 ## Interfaces and Handshakes
