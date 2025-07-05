@@ -1,6 +1,6 @@
+package helios
 import spinal.core._
 import spinal.lib._
-import HeliosParams._
 
 object NeighborID extends Enumeration {
   type NeighborID = Value
@@ -14,8 +14,9 @@ object NeighborID extends Enumeration {
 
 import NeighborID._
 
-case class Correction() extends Bundle {
+case class Correction(params: HeliosParams) extends Bundle {
   // Some 0-th slots are unused and squashed
+  import params._
   val ns_tail = Vec.fill(grid_width_u, grid_width_x - 1, grid_width_z)(Bool())
   val ew_tail = Vec.fill(grid_width_u, grid_width_x - 1, grid_width_z)(Bool())
   val ew_last = Bits(grid_width_u bits)
@@ -33,21 +34,22 @@ case class Correction() extends Bundle {
   def ud(k: Int, i: Int, j: Int) = ud_tail(k)(i)(j)
 }
 
-class DecodingGraph() extends Component {
+class DecodingGraph(params: HeliosParams) extends Component {
+  import params._
   /* IO */
   val measurements = in port Vec.fill(grid_width_x, grid_width_z)(Bool()) 
   val global_stage = in port Stage()
   val odd_clusters =
     out port Vec.fill(grid_width_u, grid_width_x, grid_width_z)(Bool())
   val busy = out port Vec.fill(grid_width_u, grid_width_x, grid_width_z)(Bool())
-  val correction = out port Correction()
+  val correction = out port Correction(params)
   /* logic */
   // Setting up grid of processing units
   val processing_unit = Seq.tabulate(grid_width_u, grid_width_x, grid_width_z) {
     (k, i, j) => {
     val address = (k << (x_bit_width + z_bit_width)) + (i << z_bit_width) + j
     val neighbor_count = 6
-    val pu = new ProcessingUnit(address)
+    val pu = new ProcessingUnit(address, params)
     pu.global_stage := global_stage
     odd_clusters(k)(i)(j) := pu.odd
     busy(k)(i)(j) := pu.busy
@@ -72,7 +74,7 @@ class DecodingGraph() extends Component {
       ai: Int, aj: Int, ak: Int,
       bi: Int, bj: Int, bk: Int,
       adir: NeighborID, bdir: NeighborID) = {
-    val link = new NeighborLink(weight_in, Boundary.no_boundary)
+    val link = new NeighborLink(weight_in, Boundary.no_boundary, params)
     val unit_a = processing_unit(ak)(ai)(aj)
     val unit_b = processing_unit(bk)(bi)(bj)
     link.global_stage := global_stage
@@ -96,7 +98,7 @@ class DecodingGraph() extends Component {
       weight_in: Int)(
       i: Int, j: Int, k: Int, dir: NeighborID,
       boundary_condition: Boundary.Value) = {
-    val link = new NeighborLink(weight_in, boundary_condition)
+    val link = new NeighborLink(weight_in, boundary_condition, params)
     val unit = processing_unit(k)(i)(j)
     link.global_stage := global_stage
     unit.neighbor_fully_grown(dir.id) := link.fully_grown

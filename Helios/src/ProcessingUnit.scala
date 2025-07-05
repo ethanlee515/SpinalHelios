@@ -1,8 +1,9 @@
+package helios
 import spinal.core._
 import spinal.lib._
-import HeliosParams._
 
-class ProcessingUnit(address: Int) extends Component {
+class ProcessingUnit(address: Int, params: HeliosParams) extends Component {
+  import params._
   /* IO */
   val measurement = in Bool()
   val measurement_out = out port Reg(Bool()) init(False)
@@ -12,9 +13,9 @@ class ProcessingUnit(address: Int) extends Component {
   val neighbor_is_boundary = in Bits(neighbor_count bits)
   val neighbor_is_error = out Bits(neighbor_count bits)
   val from_neighbor =
-    in port Vec.fill(neighbor_count)(NeighborsCommunication())
+    in port Vec.fill(neighbor_count)(NeighborsCommunication(params))
   val to_neighbor =
-    out port Vec.fill(neighbor_count)(NeighborsCommunication())
+    out port Vec.fill(neighbor_count)(NeighborsCommunication(params))
   val root = Reg(UInt(address_width bits))
   val odd = out port Reg(Bool())
   val busy = out port Reg(Bool()) init(False)

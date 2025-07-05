@@ -1,12 +1,13 @@
+package helios
 import spinal.core._
 import spinal.lib._
-import HeliosParams._
 
-class HeliosCore() extends Component {
+class HeliosCore(params: HeliosParams) extends Component {
+  import params._
   val meas_in = slave Stream(Vec.fill(grid_width_x, grid_width_z)(Bool()))
-  val output = out port Flow(Correction())
-  val graph = new DecodingGraph()
-  val controller = new UnifiedController()
+  val output = out port Flow(Correction(params))
+  val graph = new DecodingGraph(params)
+  val controller = new UnifiedController(params)
   controller.meas_in << meas_in
   graph.measurements := controller.measurements
   for(k <- 0 until grid_width_u;
@@ -22,5 +23,5 @@ class HeliosCore() extends Component {
 }
 
 object CompileVerilog extends App {
-  SpinalVerilog(new HeliosCore())
+  SpinalVerilog(new HeliosCore(HeliosParams()))
 }

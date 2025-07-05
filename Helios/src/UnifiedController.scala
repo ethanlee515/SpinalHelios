@@ -1,8 +1,9 @@
+package helios
 import spinal.core._
 import spinal.lib._
-import HeliosParams._
 
-class UnifiedController() extends Component {
+class UnifiedController(params: HeliosParams) extends Component {
+  import params._
   /* IO and states */
   val global_stage = out port Reg(Stage()) init(Stage.measurement_preparing)
   val odd_clusters_PE = in port Bits(grid_size bits)
@@ -14,7 +15,7 @@ class UnifiedController() extends Component {
   // This actually corresponds to `output_fifo_valid`
   // FIFO and serializer scrapped, and payload is redundant.
   val output_valid = out port Reg(Bool()) init(False)
-  val iteration_counter = Reg(UInt(iteration_counter_width bits))
+  // val iteration_counter = Reg(UInt(iteration_counter_width bits))
   val cycle_counter = Reg(UInt(32 bits)) init(0)
   val busy = Reg(Bool())
   val odd_clusters = Reg(Bool())

@@ -1,11 +1,13 @@
+package helios
 import spinal.core._
 import spinal.lib._
-import HeliosParams._
 
 class NeighborLink(
   weight: Int,
-  boundary_condition: Boundary.Value
+  boundary_condition: Boundary.Value,
+  params: HeliosParams
 ) extends Component {
+  import params._
   assert(weight <= max_weight)
   /* IO */
   val global_stage = in port Stage()
@@ -14,8 +16,8 @@ class NeighborLink(
   val is_boundary = out Bool()
   val a_is_error, b_is_error = in Bool()
   val is_error = out port Reg(Bool()) init(False)
-  val a_input_data, b_input_data = in port NeighborsCommunication()
-  val a_output_data, b_output_data = out port NeighborsCommunication()
+  val a_input_data, b_input_data = in port NeighborsCommunication(params)
+  val a_output_data, b_output_data = out port NeighborsCommunication(params)
   /* states */
   // `+ 1` to store from 0 to max_weight *inclusive*
   val link_bit_width = log2Up(max_weight + 1)

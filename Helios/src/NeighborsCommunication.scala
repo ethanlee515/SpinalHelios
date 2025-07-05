@@ -1,8 +1,9 @@
+package helios
 import spinal.core._
 import spinal.lib._
-import HeliosParams._
 
-case class NeighborsCommunication() extends Bundle {
+case class NeighborsCommunication(params: HeliosParams) extends Bundle {
+  import params._
   val root = UInt(address_width bits)
   val parent_vector = Bool()
   val odd = Bool()
