@@ -93,3 +93,10 @@ For the theory behind this union-find algorithm, we direct the readers to the [H
     Our "corrections test" then simulates the SpinalHDL port and verifies that the outputs match.
   * ["Driver"](./Helios/test/src/Driver.scala): Usage example for how to drive the input stream and observe the output flow.
   * ["formal-verification/"](./Helios/test/src/formal-verification/): Formally verifying the equivalence between our building blocks and those of the original Helios.
+
+## TODO
+
+* Coordinate transform
+* Make weight lambda (or map)
+* Belief propagation?
+* Try out Cursor!
