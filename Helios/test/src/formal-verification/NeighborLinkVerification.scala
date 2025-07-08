@@ -1,3 +1,6 @@
+package helios
+package test
+
 import spinal.core._
 import spinal.lib._
 import utest._
@@ -7,7 +10,8 @@ import spinal.core.formal._
 import spinal.core.assert
 import TestParams._
 
-class BoxedLink extends BlackBox {
+class BoxedLink(params: HeliosParams) extends BlackBox {
+  import params._
   val link_bit_width = log2Up(max_weight + 1)
   val io = new Bundle {
     val clk, reset = in port Bool()
@@ -35,11 +39,12 @@ class BoxedLink extends BlackBox {
 
 class LinkEquivalenceChecker(boundary: Boundary.Value) extends Component {
   val weight = 2
+  val params = HeliosParams()
   // Inputs
   val global_stage = in port Stage()
   val a_increase, b_increase = in Bool()
   val a_is_error, b_is_error = in Bool()
-  val a_input_data, b_input_data = in port NeighborsCommunication()
+  val a_input_data, b_input_data = in port NeighborsCommunication(params)
   // Outputs eqs
   val is_error_eq = out port Bool()
   val is_boundary_eq = out port Bool()
@@ -47,7 +52,7 @@ class LinkEquivalenceChecker(boundary: Boundary.Value) extends Component {
   val a_output_data_eq = out port Bool()
   val b_output_data_eq = out port Bool()
   // instantiate
-  val reference = new BoxedLink()
+  val reference = new BoxedLink(params)
   // reference-only data
   reference.io.weight_in := B(weight)
   reference.io.boundary_condition_in := B(boundary match {
@@ -56,7 +61,7 @@ class LinkEquivalenceChecker(boundary: Boundary.Value) extends Component {
     case Boundary.nexist_edge => 2
   }, 2 bits)
   reference.io.is_error_systolic_in := False
-  val link = new NeighborLink(weight, boundary)
+  val link = new NeighborLink(weight, boundary, params)
   // replace first stage with loading
   val cycles = Reg(UInt(5 bits)) init(0)
   cycles := cycles + 1

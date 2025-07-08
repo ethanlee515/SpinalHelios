@@ -1,60 +1,14 @@
+package helios
+package test
+
 import scala.io.Source
 import spinal.core._
 import spinal.lib._
 import spinal.core.sim._
-import HeliosParams._
-
-object HeliosDriver {
-  // Poor man's whiteboxer
-  def simPublics(dut: FlattenedHelios) = {
-    dut.core.controller.global_stage.simPublic()
-    dut.core.controller.measurement_rounds.simPublic()
-    for(k <- 0 until grid_width_u;
-        i <- 0 until grid_width_x;
-        j <- 0 until grid_width_z) {
-      dut.core.graph.processing_unit(k)(i)(j).busy.simPublic()
-      dut.core.graph.processing_unit(k)(i)(j).solver.valids.simPublic()
-      dut.core.graph.processing_unit(k)(i)(j).root.simPublic()
-      for(h <- 0 until neighbor_count) {
-        dut.core.graph.processing_unit(k)(i)(j).solver.values(h).simPublic()
-      }
-    }
-    dut.core.output.payload.ns_tail.simPublic()
-    dut.core.output.payload.ew_tail.simPublic()
-    dut.core.output.payload.ew_last.simPublic()
-    dut.core.output.payload.ud_tail.simPublic()
-  }
-
-  def parseInput(filename: String) = {
-    val lines = Source.fromFile(filename).getLines().toList
-    assert(lines.length == 100 * (grid_size + 1))
-    val shots = Seq.tabulate(100, grid_size) { (i, j) =>
-      val line = lines((grid_size + 1) * i + j + 1)
-      assert(line == "00000000" || line == "00000001")
-      line == "00000001"
-    }
-    val grids = shots.map(shot => {
-      Seq.tabulate(grid_width_u, grid_width_x, grid_width_z) { (k, i, j) =>
-        shot(Address(k, i, j).index)
-      }
-    })
-    grids
-  }
-
-  def syndromeNonzero(shot: Seq[Seq[Seq[Boolean]]]) : Boolean = {
-    for(a <- shot;
-        b <- a;
-        c <- b) {
-          if(c) {
-            return true
-          }
-        }
-    return false
-  }
-}
 
 class HeliosDriver(dut: FlattenedHelios) {
   val cd = dut.clockDomain
+  import dut.params._
   def init() = {
     dut.meas_in_valid #= false
     cd.forkStimulus(10)
@@ -105,23 +59,7 @@ class HeliosDriver(dut: FlattenedHelios) {
       cd.waitSampling()
       dut.meas_in_valid #= false
     }
-    /*
-    for(_ <- 0 until 15) {
-      cd.waitSampling()
-      log_stage()
-      log_roots()
-      log_busy()
-      log_solver_valids()
-      println()
-    }
-    */
     assert(!cd.waitSamplingWhere(1000) { dut.output_valid.toBoolean })
-    /*
-    while(!dut.output_valid.toBoolean) {
-      cd.waitSampling()
-      log_solver_valids()
-    }
-    */
   }
 
   def read_roots() : Seq[Seq[Seq[Address]]] = {
@@ -158,28 +96,55 @@ class HeliosDriver(dut: FlattenedHelios) {
   def log_roots() = {
     println(read_roots())
   }
-}
 
-case class Address(k: Int, i: Int, j: Int) {
-  def index = {
-    k * grid_width_x * grid_width_z + i * grid_width_z + j
+  def parseInput(filename: String) = {
+    val lines = Source.fromFile(filename).getLines().toList
+    assert(lines.length == 100 * (grid_size + 1))
+    val shots = Seq.tabulate(100, grid_size) { (i, j) =>
+      val line = lines((grid_size + 1) * i + j + 1)
+      assert(line == "00000000" || line == "00000001")
+      line == "00000001"
+    }
+    val grids = shots.map(shot => {
+      Seq.tabulate(grid_width_u, grid_width_x, grid_width_z) { (k, i, j) =>
+        shot(Address(k, i, j).index)
+      }
+    })
+    grids
   }
-}
 
-object Address {
-  def fromIndex(flatIndex: Int) : Address = {
-    val j = flatIndex % grid_width_z
-    val ki = flatIndex / grid_width_z
-    val i = ki % grid_width_x
-    val k = ki / grid_width_x
-    Address(k, i, j)
+  def syndromeNonzero(shot: Seq[Seq[Seq[Boolean]]]) : Boolean = {
+    for(a <- shot;
+        b <- a;
+        c <- b) {
+          if(c) {
+            return true
+          }
+        }
+    return false
   }
 
-  def unpack(packed: Int) : Address = {
-    val j = packed & ((1 << z_bit_width) - 1)
-    val ki = packed >> z_bit_width
-    val i = ki & ((1 << x_bit_width) - 1)
-    val k = ki >> x_bit_width
-    Address(k, i, j)
+  case class Address(k: Int, i: Int, j: Int) {
+    def index = {
+      k * grid_width_x * grid_width_z + i * grid_width_z + j
+    }
+  }
+
+  object Address {
+    def fromIndex(flatIndex: Int) : Address = {
+      val j = flatIndex % grid_width_z
+      val ki = flatIndex / grid_width_z
+      val i = ki % grid_width_x
+      val k = ki / grid_width_x
+      Address(k, i, j)
+    }
+
+    def unpack(packed: Int) : Address = {
+      val j = packed & ((1 << z_bit_width) - 1)
+      val ki = packed >> z_bit_width
+      val i = ki & ((1 << x_bit_width) - 1)
+      val k = ki >> x_bit_width
+      Address(k, i, j)
+    }
   }
 }

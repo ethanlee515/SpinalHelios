@@ -1,3 +1,6 @@
+package helios
+package test
+
 import spinal.core._
 import spinal.lib._
 import utest._
@@ -7,7 +10,8 @@ import spinal.core.formal._
 import spinal.core.assert
 import TestParams._
 
-class BoxedUnit(address: Int) extends BlackBox {
+class BoxedUnit(address: Int, params: HeliosParams) extends BlackBox {
+  import params._
   val io = new Bundle {
     val clk, reset = in port Bool()
     val measurement = in port Bool()
@@ -33,13 +37,15 @@ class BoxedUnit(address: Int) extends BlackBox {
 }
 
 class UnitEquivChecker extends Component {
+  val params = HeliosParams()
+  import params._
   // inputs
   val measurement = in Bool()
   val global_stage = in port Stage()
   val neighbor_fully_grown = in Bits(neighbor_count bits)
   val neighbor_is_boundary = in Bits(neighbor_count bits)
   val from_neighbor =
-    in port Vec.fill(neighbor_count)(NeighborsCommunication())
+    in port Vec.fill(neighbor_count)(NeighborsCommunication(params))
   // constraints
   val cycles = out port Reg(UInt(8 bits)) init(0)
   cycles := cycles + 1
@@ -49,8 +55,8 @@ class UnitEquivChecker extends Component {
   val meas_out_eq, neighbor_inc_eq, neighbor_err_eq, to_neighbor_eq, odd_eq, busy_eq = out Bool()
   // instantiate
   val address = 0b01011010
-  val reference = new BoxedUnit(address)
-  val unit = new ProcessingUnit(address)
+  val reference = new BoxedUnit(address, params)
+  val unit = new ProcessingUnit(address, params)
   // feeding inputs
   reference.io.measurement := measurement
   unit.measurement := measurement

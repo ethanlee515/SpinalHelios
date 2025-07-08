@@ -1,6 +1,8 @@
+package helios
+package test
+
 import scala.io.Source
 import utest._
-import HeliosParams._
 import spinal.core._
 import spinal.lib._
 import spinal.core.sim._
@@ -8,12 +10,13 @@ import utest.assert
 import TestParams._
 
 object CorrectionTest extends TestSuite {
+  val params = HeliosParams()
+  import params._
+
   val input_filename =
     f"ext/Helios_scalable_QEC/test_benches/test_data/input_data_${code_distance}_rsc.txt"
   val output_filename =
     f"ext/Helios_scalable_QEC/test_benches/test_data/corrections_${code_distance}.txt"
-
-  val input_data = HeliosDriver.parseInput(input_filename)
 
   val ns_len = (grid_width_x - 1) * grid_width_z
   val ew_len = (grid_width_x - 1) * grid_width_z + 1
@@ -47,12 +50,13 @@ object CorrectionTest extends TestSuite {
   def tests = Tests {
     test("checking corrections against test data") {
       SimConfig.compile {
-        val dut = new FlattenedHelios
-        HeliosDriver.simPublics(dut)
+        val dut = new FlattenedHelios(params)
+        // HeliosDriver.simPublics(dut)
         dut
       }.doSim { dut =>
         val driver = new HeliosDriver(dut)
         driver.init()
+        val input_data = driver.parseInput(input_filename)
         for(s <- 0 until input_data.length) {
           driver.do_shot(input_data(s))
           for(k <- 0 until grid_width_u;

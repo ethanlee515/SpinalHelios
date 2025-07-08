@@ -1,3 +1,6 @@
+package helios
+package test
+
 import scala.io.Source
 import utest._
 import HeliosParams._
@@ -7,50 +10,49 @@ import spinal.core.sim._
 import utest.assert
 
 object RootTest extends TestSuite {
+  val params = HeliosParams()
+  import params._
+
   val input_filename =
     f"ext/Helios_scalable_QEC/test_benches/test_data/input_data_${code_distance}_rsc.txt"
   val output_filename =
     f"ext/Helios_scalable_QEC/test_benches/test_data/output_data_${code_distance}_rsc.txt"
 
-  val input_data = HeliosDriver.parseInput(input_filename)
-
-  def parseOutputLine(line: String) : Address = {
-    val k = Integer.parseInt(line.substring(2, 4), 16)
-    val i = Integer.parseInt(line.substring(4, 6), 16)
-    val j = Integer.parseInt(line.substring(6, 8), 16)
-    Address(k, i, j)
-  }
-
-  def parseOutputShot(shot: Seq[String]) : Seq[Seq[Seq[Address]]] = {
-    assert(shot.length == grid_size)
-    Seq.tabulate(grid_width_u, grid_width_x, grid_width_z) { (k, i, j) =>
-      val flat_index = i * grid_width_z + j + k * grid_width_x * grid_width_z
-      val line = shot(flat_index)
-      parseOutputLine(line)
-    }
-  }
-
-  def parseOutput(filename: String) = {
-    val lines = Source.fromFile(filename).getLines().toList
-    assert(lines.length == 100 * (grid_size + 1))
-    val shots = Seq.tabulate(100, grid_size) { (i, j) =>
-      lines((grid_size + 1) * i + j + 1)
-    }
-    val grids = shots.map(parseOutputShot)
-    grids
-  }
-  
-  val output_data = parseOutput(output_filename)
-
   def tests = Tests {
     test("checking roots against test data") {
       SimConfig.compile {
-        val dut = new FlattenedHelios
-        HeliosDriver.simPublics(dut)
-        dut
+        new FlattenedHelios(params)
       }.doSim { dut =>
         val driver = new HeliosDriver(dut)
-        driver.init()
+        import driver._
+
+        init()
+        val input_data = parseInput(input_filename)
+        def parseOutputLine(line: String) : Address = {
+          val k = Integer.parseInt(line.substring(2, 4), 16)
+          val i = Integer.parseInt(line.substring(4, 6), 16)
+          val j = Integer.parseInt(line.substring(6, 8), 16)
+          Address(k, i, j)
+        }
+        def parseOutputShot(shot: Seq[String]) : Seq[Seq[Seq[Address]]] = {
+          assert(shot.length == grid_size)
+          Seq.tabulate(grid_width_u, grid_width_x, grid_width_z) { (k, i, j) =>
+            val flat_index = i * grid_width_z + j + k * grid_width_x * grid_width_z
+            val line = shot(flat_index)
+            parseOutputLine(line)
+          }
+        }
+        def parseOutput(filename: String) = {
+          val lines = Source.fromFile(filename).getLines().toList
+          assert(lines.length == 100 * (grid_size + 1))
+          val shots = Seq.tabulate(100, grid_size) { (i, j) =>
+            lines((grid_size + 1) * i + j + 1)
+          }
+          val grids = shots.map(parseOutputShot)
+          grids
+        }
+        val output_data = parseOutput(output_filename)
+
         for(i <- 0 until input_data.length) {
           val shot = input_data(i)
           driver.do_shot(shot)

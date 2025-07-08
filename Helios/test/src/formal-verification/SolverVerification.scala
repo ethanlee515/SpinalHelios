@@ -1,3 +1,6 @@
+package helios
+package test
+
 import utest._
 import HeliosParams._
 import spinal.core._
