@@ -4,8 +4,12 @@ import spinal.lib._
 
 class HeliosCore(params: HeliosParams) extends Component {
   import params._
+  /* IO */
   val meas_in = slave Stream(Vec.fill(grid_width_x, grid_width_z)(Bool()))
-  val output = out port Flow(Correction(params))
+  // TODO maybe make this debug `simPublic`` instead of `out port`
+  val corrections = out port Flow(Correction(params))
+  val output = out port Flow(Vec.fill(code_distance, code_distance)(Bool()))
+  /* logic */
   val graph = new DecodingGraph(params)
   val controller = new UnifiedController(params)
   controller.meas_in << meas_in
@@ -18,8 +22,11 @@ class HeliosCore(params: HeliosParams) extends Component {
     controller.odd_clusters_PE(id) := graph.odd_clusters(k)(i)(j)
   }
   graph.global_stage := controller.global_stage
-  output.payload := graph.correction
-  output.valid := controller.output_valid
+  corrections.payload := graph.correction
+  corrections.valid := controller.output_valid
+  val flattener = new CorrectionFlattener(params)
+  flattener.layered_correction << corrections
+  output << flattener.flat_correction
 }
 
 object CompileVerilog extends App {

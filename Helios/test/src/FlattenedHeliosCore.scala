@@ -26,7 +26,7 @@ class FlattenedHelios(val params: HeliosParams) extends Component {
   // flattening the correction output flow
   // apparently simPublic doesn't work on vec/bits...
   val output_valid = out Bool()
-  output_valid := core.output.valid
+  output_valid := core.corrections.valid
 
   val ns_indices = {
     for(k <- 0 until grid_width_u;
@@ -35,7 +35,7 @@ class FlattenedHelios(val params: HeliosParams) extends Component {
   }
   val ns = ns_indices.map { case (k, i, j) =>
     val b = out Bool()
-    b := core.output.payload.ns(k, i, j)
+    b := core.corrections.payload.ns(k, i, j)
     (k, i, j) -> b
   }.toMap
   val ew_indices = {
@@ -53,7 +53,7 @@ class FlattenedHelios(val params: HeliosParams) extends Component {
   }
   val ew = ew_indices.map { case (k, i, j) =>
     val b = out Bool()
-    b := core.output.payload.ew(k, i, j)
+    b := core.corrections.payload.ew(k, i, j)
     (k, i, j) -> b
   }.toMap
   val ud_indices = {
@@ -63,7 +63,7 @@ class FlattenedHelios(val params: HeliosParams) extends Component {
   }
   val ud = ud_indices.map { case (k, i, j) =>
     val b = out Bool()
-    b := core.output.payload.ud(k, i, j)
+    b := core.corrections.payload.ud(k, i, j)
     (k, i, j) -> b
   }.toMap
 
@@ -80,8 +80,8 @@ class FlattenedHelios(val params: HeliosParams) extends Component {
       core.graph.processing_unit(k)(i)(j).solver.values(h).simPublic()
     }
   }
-  core.output.payload.ns_tail.simPublic()
-  core.output.payload.ew_tail.simPublic()
-  core.output.payload.ew_last.simPublic()
-  core.output.payload.ud_tail.simPublic()
+  core.corrections.payload.ns_tail.simPublic()
+  core.corrections.payload.ew_tail.simPublic()
+  core.corrections.payload.ew_last.simPublic()
+  core.corrections.payload.ud_tail.simPublic()
 }

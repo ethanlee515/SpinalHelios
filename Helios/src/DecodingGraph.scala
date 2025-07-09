@@ -14,26 +14,6 @@ object NeighborID extends Enumeration {
 
 import NeighborID._
 
-case class Correction(params: HeliosParams) extends Bundle {
-  // Some 0-th slots are unused and squashed
-  import params._
-  val ns_tail = Vec.fill(grid_width_u, grid_width_x - 1, grid_width_z)(Bool())
-  val ew_tail = Vec.fill(grid_width_u, grid_width_x - 1, grid_width_z)(Bool())
-  val ew_last = Bits(grid_width_u bits)
-  val ud_tail = Vec.fill(grid_width_u, grid_width_x, grid_width_z)(Bool())
-  // Dealing with 1-indexing correspondingly
-  def ns(k: Int, i: Int, j: Int) = ns_tail(k)(i - 1)(j - 1)
-  def ew(k: Int, i: Int, j: Int) = {
-    if(j != grid_width_z) {
-      ew_tail(k)(i - 1)(j)
-    } else {
-      assert(i == grid_width_x - 1)
-      ew_last(k)
-    }
-  }
-  def ud(k: Int, i: Int, j: Int) = ud_tail(k)(i)(j)
-}
-
 class DecodingGraph(params: HeliosParams) extends Component {
   import params._
   /* IO */
@@ -119,25 +99,29 @@ class DecodingGraph(params: HeliosParams) extends Component {
     val weight_in = weight_ns
     val link_0 = neighbor_link_0(is_error_out, weight_in) _
     val link_single = neighbor_link_single(is_error_out, weight_in) _
+    // first row
     if (i == 0 && j < grid_width_z) {
-      // "first row"
       link_single(i, j, k, NeighborID.north, Boundary.nexist_edge)
-    } else if(i == grid_width_x && j < grid_width_z) {
+    }
+    // Last row
+    if(i == grid_width_x && j < grid_width_z) {
       link_single(i - 1, j, k, NeighborID.south, Boundary.nexist_edge)
-    } else if(i < grid_width_x && i > 0 && i % 2 == 1 && j > 0) {
-      // "odd rows which are always internal"
+    }
+    // Odd rows which are always internal
+    if(i < grid_width_x && i > 0 && i % 2 == 1 && j > 0) {
       link_0(i - 1, j - 1, k, i, j - 1, k, NeighborID.south, NeighborID.north)
-    } else if(i < grid_width_x && i > 0 && i % 2 == 0 && j == 0) {
-      // "First element of even rows"
+    }
+    // First element of even rows
+    if(i < grid_width_x && i > 0 && i % 2 == 0 && j == 0) {
       link_single(i, j, k, NeighborID.north, Boundary.nexist_edge)
-    } else if(i < grid_width_x && i > 0 && i % 2 == 0 && j == grid_width_z) {
-      // "Last element of even rows"
-      link_single(i - 1, j - 1, k, NeighborID.south, Boundary.a_boundary)
-    } else if(
-      i < grid_width_x && i > 0 && i % 2 == 0 && j > 0 && j < grid_width_z
-    ) {
-      // "Middle element of even rows"
+    }
+    // "Middle element of even rows"
+    if(i < grid_width_x && i > 0 && i % 2 == 0 && j > 0 && j < grid_width_z) {
       link_0(i - 1, j - 1, k, i, j, k, NeighborID.south, NeighborID.north)
+    }
+    // "Last element of even rows"
+    if(i < grid_width_x && i > 0 && i % 2 == 0 && j == grid_width_z) {
+      link_single(i - 1, j - 1, k, NeighborID.south, Boundary.a_boundary)
     }
   }}
   val ew = Seq.tabulate(
@@ -147,31 +131,33 @@ class DecodingGraph(params: HeliosParams) extends Component {
     val weight_in = weight_ew
     val link_0 = neighbor_link_0(is_error_out, weight_in) _
     val link_single = neighbor_link_single(is_error_out, weight_in) _
+    // First row
     if(i == 0 && j < grid_width_z) {
-      // "First row"
       link_single(i, j, k, NeighborID.east, Boundary.nexist_edge)
-    } else if(i == grid_width_x && j < grid_width_z) {
-      // "Last row"
+    }
+    // Last row
+    if(i == grid_width_x && j < grid_width_z) {
       link_single(i - 1, j, k, NeighborID.west, Boundary.nexist_edge)
-    } else if(i < grid_width_x && i > 0 && i % 2 == 0 && j < grid_width_z) {
-      // "even rows which are always internal"
+    }
+    // even rows which are always internal
+    if(i < grid_width_x && i > 0 && i % 2 == 0 && j < grid_width_z) {
       link_0(i, j, k, i - 1, j, k, NeighborID.east, NeighborID.west)
-    } else if(i < grid_width_x && i > 0 && i % 2 == 1 && j == 0) {
-      // "First element of odd rows"
+    }
+    // First element of odd rows
+    if(i < grid_width_x && i > 0 && i % 2 == 1 && j == 0) {
       link_single(i - 1, j, k, NeighborID.west, Boundary.a_boundary)
-    } else if(
-      i < grid_width_x - 1 && i > 0 && i % 2 == 1 && j == grid_width_z
-    ) {
-      // "Last element of odd rows excluding last row"
-      link_single(i, j - 1, k, NeighborID.east, Boundary.nexist_edge)
-    } else if(i == grid_width_x - 1 && j == grid_width_z) {
-      // Last element of last odd row
-      link_single(i, j - 1, k, NeighborID.east, Boundary.a_boundary)
-    } else if(
-      i < grid_width_x && i > 0 && i % 2 == 1 && j > 0 && j < grid_width_z
-    ) {
-      // Middle elements of odd rows
+    }
+    // Middle elements of odd rows
+    if(i < grid_width_x && i > 0 && i % 2 == 1 && j > 0 && j < grid_width_z) {
       link_0(i, j - 1, k, i - 1, j, k, NeighborID.east, NeighborID.west)
+    }
+    // Last element of odd rows excluding last row
+    if(i < grid_width_x - 1 && i > 0 && i % 2 == 1 && j == grid_width_z) {
+      link_single(i, j - 1, k, NeighborID.east, Boundary.nexist_edge)
+    }
+    // Last element of last odd row
+    if(i == grid_width_x - 1 && j == grid_width_z) {
+      link_single(i, j - 1, k, NeighborID.east, Boundary.a_boundary)
     }
   }}
   val ud = Seq.tabulate(grid_width_u + 1, grid_width_x, grid_width_z) {
