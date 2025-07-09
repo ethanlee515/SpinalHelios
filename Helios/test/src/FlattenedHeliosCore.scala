@@ -27,46 +27,21 @@ class FlattenedHelios(val params: HeliosParams) extends Component {
   // apparently simPublic doesn't work on vec/bits...
   val output_valid = out Bool()
   output_valid := core.corrections.valid
-
-  val ns_indices = {
-    for(k <- 0 until grid_width_u;
-        i <- 1 until grid_width_x;
-        j <- 1 to grid_width_z) yield (k, i, j)
-  }
   val ns = ns_indices.map { case (k, i, j) =>
     val b = out Bool()
     b := core.corrections.payload.ns(k, i, j)
     (k, i, j) -> b
   }.toMap
-  val ew_indices = {
-    val s1 = {
-      for(k <- 0 until grid_width_u;
-          i <- 1 until grid_width_x;
-          j <- 0 until grid_width_z) yield (k, i, j)
-    }
-    val s2 = {
-      val i = grid_width_x - 1
-      val j = grid_width_z
-      for(k <- 0 until grid_width_u) yield (k, i, j)
-    }
-    s1 ++ s2
-  }
   val ew = ew_indices.map { case (k, i, j) =>
     val b = out Bool()
     b := core.corrections.payload.ew(k, i, j)
     (k, i, j) -> b
   }.toMap
-  val ud_indices = {
-  for(k <- 0 until grid_width_u;
-      i <- 0 until grid_width_x;
-      j <- 0 until grid_width_z) yield (k, i, j)
-  }
   val ud = ud_indices.map { case (k, i, j) =>
     val b = out Bool()
     b := core.corrections.payload.ud(k, i, j)
     (k, i, j) -> b
   }.toMap
-
   // Calling `simPublic` on whatever needed
   core.controller.global_stage.simPublic()
   core.controller.measurement_rounds.simPublic()

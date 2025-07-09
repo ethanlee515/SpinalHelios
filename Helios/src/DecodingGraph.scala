@@ -96,7 +96,7 @@ class DecodingGraph(params: HeliosParams) extends Component {
   val ns = Seq.tabulate(grid_width_u, grid_width_x + 1, grid_width_z + 1) {
       (k, i, j) => new Area {
     val is_error_out = Bool()
-    val weight_in = weight_ns
+    val weight_in = weight_ns(k, i, j)
     val link_0 = neighbor_link_0(is_error_out, weight_in) _
     val link_single = neighbor_link_single(is_error_out, weight_in) _
     // first row
@@ -128,7 +128,7 @@ class DecodingGraph(params: HeliosParams) extends Component {
     grid_width_u, grid_width_x + 1, grid_width_z + 1
   ) { (k, i, j) => new Area {
     val is_error_out = Bool()
-    val weight_in = weight_ew
+    val weight_in = weight_ew(k, i, j)
     val link_0 = neighbor_link_0(is_error_out, weight_in) _
     val link_single = neighbor_link_single(is_error_out, weight_in) _
     // First row
@@ -163,7 +163,7 @@ class DecodingGraph(params: HeliosParams) extends Component {
   val ud = Seq.tabulate(grid_width_u + 1, grid_width_x, grid_width_z) {
       (k, i, j) => new Area {
     val is_error_out = Bool()
-    val weight_in = weight_ud
+    val weight_in = weight_ud(k, i, j)
     val link_0 = neighbor_link_0(is_error_out, weight_in) _
     val link_single = neighbor_link_single(is_error_out, weight_in) _
     if(k == 0) {
