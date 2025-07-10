@@ -22,13 +22,11 @@ case class Correction(params: HeliosParams) extends Bundle {
   def ud(k: Int, i: Int, j: Int) = ud_tail(k)(i)(j)
   def data(k: Int, x: Int, y: Int) : Bool = {
     /* ns */
-    // (even, odd) = ??
     if(x % 2 == 0 && y % 2 == 1) {
       val i = x + 1
       val j = y / 2 + 1
       return ns(k, i, j)
     }
-    // (odd, even) = ??
     if(x % 2 == 1 && y % 2 == 0) {
       if(y == 0) {
         return False
@@ -45,13 +43,11 @@ case class Correction(params: HeliosParams) extends Bundle {
       }
     }
     /* ew */
-    // (odd, odd) = ??
     if(x % 2 == 1 && y % 2 == 1) {
       val i = x + 1
       val j = y / 2
       return ew(k, i, j)
     }
-    // (even, even) = ??
     if(x % 2 == 0 && y % 2 == 0) {
       if(y == 0) {
         val i = x + 1
@@ -68,9 +64,9 @@ case class Correction(params: HeliosParams) extends Bundle {
           return False
         }
         if(x == code_distance - 1) {
-          val i = grid_width_x - 1
-          val j = grid_width_z - 1
-          return ew(k, i, j)
+          val s = grid_width_x - 1
+          val t = grid_width_z
+          return ew(k, s, t)
         }
       }
     }

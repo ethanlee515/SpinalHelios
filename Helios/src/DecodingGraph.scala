@@ -94,104 +94,104 @@ class DecodingGraph(params: HeliosParams) extends Component {
     link
   }
   val ns = Seq.tabulate(grid_width_u, grid_width_x + 1, grid_width_z + 1) {
-      (k, i, j) => new Area {
+      (k, s, t) => new Area {
     val is_error_out = Bool()
-    val weight_in = weight_ns(k, i, j)
+    val weight_in = weight_ns(k, s, t)
     val link_0 = neighbor_link_0(is_error_out, weight_in) _
     val link_single = neighbor_link_single(is_error_out, weight_in) _
     // first row
-    if (i == 0 && j < grid_width_z) {
-      link_single(i, j, k, NeighborID.north, Boundary.nexist_edge)
+    if (s == 0 && t < grid_width_z) {
+      link_single(s, t, k, NeighborID.north, Boundary.nexist_edge)
     }
     // Last row
-    if(i == grid_width_x && j < grid_width_z) {
-      link_single(i - 1, j, k, NeighborID.south, Boundary.nexist_edge)
+    if(s == grid_width_x && t < grid_width_z) {
+      link_single(s - 1, t, k, NeighborID.south, Boundary.nexist_edge)
     }
     // Odd rows which are always internal
-    if(i < grid_width_x && i > 0 && i % 2 == 1 && j > 0) {
-      link_0(i - 1, j - 1, k, i, j - 1, k, NeighborID.south, NeighborID.north)
+    if(s < grid_width_x && s > 0 && s % 2 == 1 && t > 0) {
+      link_0(s - 1, t - 1, k, s, t - 1, k, NeighborID.south, NeighborID.north)
     }
     // First element of even rows
-    if(i < grid_width_x && i > 0 && i % 2 == 0 && j == 0) {
-      link_single(i, j, k, NeighborID.north, Boundary.nexist_edge)
+    if(s < grid_width_x && s > 0 && s % 2 == 0 && t == 0) {
+      link_single(s, t, k, NeighborID.north, Boundary.nexist_edge)
     }
     // "Middle element of even rows"
-    if(i < grid_width_x && i > 0 && i % 2 == 0 && j > 0 && j < grid_width_z) {
-      link_0(i - 1, j - 1, k, i, j, k, NeighborID.south, NeighborID.north)
+    if(s < grid_width_x && s > 0 && s % 2 == 0 && t > 0 && t < grid_width_z) {
+      link_0(s - 1, t - 1, k, s, t, k, NeighborID.south, NeighborID.north)
     }
     // "Last element of even rows"
-    if(i < grid_width_x && i > 0 && i % 2 == 0 && j == grid_width_z) {
-      link_single(i - 1, j - 1, k, NeighborID.south, Boundary.a_boundary)
+    if(s < grid_width_x && s > 0 && s % 2 == 0 && t == grid_width_z) {
+      link_single(s - 1, t - 1, k, NeighborID.south, Boundary.a_boundary)
     }
   }}
   val ew = Seq.tabulate(
     grid_width_u, grid_width_x + 1, grid_width_z + 1
-  ) { (k, i, j) => new Area {
+  ) { (k, s, t) => new Area {
     val is_error_out = Bool()
-    val weight_in = weight_ew(k, i, j)
+    val weight_in = weight_ew(k, s, t)
     val link_0 = neighbor_link_0(is_error_out, weight_in) _
     val link_single = neighbor_link_single(is_error_out, weight_in) _
     // First row
-    if(i == 0 && j < grid_width_z) {
-      link_single(i, j, k, NeighborID.east, Boundary.nexist_edge)
+    if(s == 0 && t < grid_width_z) {
+      link_single(s, t, k, NeighborID.east, Boundary.nexist_edge)
     }
     // Last row
-    if(i == grid_width_x && j < grid_width_z) {
-      link_single(i - 1, j, k, NeighborID.west, Boundary.nexist_edge)
+    if(s == grid_width_x && t < grid_width_z) {
+      link_single(s - 1, t, k, NeighborID.west, Boundary.nexist_edge)
     }
     // even rows which are always internal
-    if(i < grid_width_x && i > 0 && i % 2 == 0 && j < grid_width_z) {
-      link_0(i, j, k, i - 1, j, k, NeighborID.east, NeighborID.west)
+    if(s < grid_width_x && s > 0 && s % 2 == 0 && t < grid_width_z) {
+      link_0(s, t, k, s - 1, t, k, NeighborID.east, NeighborID.west)
     }
     // First element of odd rows
-    if(i < grid_width_x && i > 0 && i % 2 == 1 && j == 0) {
-      link_single(i - 1, j, k, NeighborID.west, Boundary.a_boundary)
+    if(s < grid_width_x && s > 0 && s % 2 == 1 && t == 0) {
+      link_single(s - 1, t, k, NeighborID.west, Boundary.a_boundary)
     }
     // Middle elements of odd rows
-    if(i < grid_width_x && i > 0 && i % 2 == 1 && j > 0 && j < grid_width_z) {
-      link_0(i, j - 1, k, i - 1, j, k, NeighborID.east, NeighborID.west)
+    if(s < grid_width_x && s > 0 && s % 2 == 1 && t > 0 && t < grid_width_z) {
+      link_0(s, t - 1, k, s - 1, t, k, NeighborID.east, NeighborID.west)
     }
     // Last element of odd rows excluding last row
-    if(i < grid_width_x - 1 && i > 0 && i % 2 == 1 && j == grid_width_z) {
-      link_single(i, j - 1, k, NeighborID.east, Boundary.nexist_edge)
+    if(s < grid_width_x - 1 && s > 0 && s % 2 == 1 && t == grid_width_z) {
+      link_single(s, t - 1, k, NeighborID.east, Boundary.nexist_edge)
     }
     // Last element of last odd row
-    if(i == grid_width_x - 1 && j == grid_width_z) {
-      link_single(i, j - 1, k, NeighborID.east, Boundary.a_boundary)
+    if(s == grid_width_x - 1 && t == grid_width_z) {
+      link_single(s, t - 1, k, NeighborID.east, Boundary.a_boundary)
     }
   }}
   val ud = Seq.tabulate(grid_width_u + 1, grid_width_x, grid_width_z) {
-      (k, i, j) => new Area {
+      (k, s, t) => new Area {
     val is_error_out = Bool()
-    val weight_in = weight_ud(k, i, j)
+    val weight_in = weight_ud(k, s, t)
     val link_0 = neighbor_link_0(is_error_out, weight_in) _
     val link_single = neighbor_link_single(is_error_out, weight_in) _
     if(k == 0) {
-      link_single(i, j, k, NeighborID.down, Boundary.a_boundary)
+      link_single(s, t, k, NeighborID.down, Boundary.a_boundary)
     } else if(k == grid_width_u) {
-      link_single(i, j, k - 1, NeighborID.up, Boundary.nexist_edge)
+      link_single(s, t, k - 1, NeighborID.up, Boundary.nexist_edge)
     } else {
-      link_0(i, j, k - 1, i, j, k, NeighborID.up, NeighborID.down)
+      link_0(s, t, k - 1, s, t, k, NeighborID.up, NeighborID.down)
     }
   }}
   // correction outputs
   for(k <- 0 until grid_width_u;
-      i <- 1 until grid_width_x;
-      j <- 1 to grid_width_z) {
-    correction.ns(k, i, j) := ns(k)(i)(j).is_error_out
+      s <- 1 until grid_width_x;
+      t <- 1 to grid_width_z) {
+    correction.ns(k, s, t) := ns(k)(s)(t).is_error_out
   }
   for(k <- 0 until grid_width_u;
-      i <- 1 until grid_width_x;
-      j <- 0 until grid_width_z) {
-    correction.ew(k, i, j) := ew(k)(i)(j).is_error_out
+      s <- 1 until grid_width_x;
+      t <- 0 until grid_width_z) {
+    correction.ew(k, s, t) := ew(k)(s)(t).is_error_out
   }
   for(k <- 0 until grid_width_u) {
     correction.ew(k, grid_width_x - 1, grid_width_z) :=
       ew(k)(grid_width_x - 1)(grid_width_z).is_error_out
   }
   for(k <- 0 until grid_width_u;
-      i <- 0 until grid_width_x;
-      j <- 0 until grid_width_z) {
-    correction.ud(k, i, j) := ud(k)(i)(j).is_error_out
+      s <- 0 until grid_width_x;
+      t <- 0 until grid_width_z) {
+    correction.ud(k, s, t) := ud(k)(s)(t).is_error_out
   }
 }
