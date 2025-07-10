@@ -1,7 +1,8 @@
-FROM ubuntu:22.04
+FROM debian:bookworm
 
 RUN apt-get update
-RUN apt-get install -y wget tar curl openjdk-17-jdk git make g++
+RUN apt-get install -y git git-lfs
+RUN apt-get install -y wget tar curl openjdk-17-jdk make g++
 
 WORKDIR /opt
 RUN wget https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2025-07-05/oss-cad-suite-linux-x64-20250705.tgz
