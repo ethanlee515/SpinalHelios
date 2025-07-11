@@ -19,18 +19,54 @@ In other words, the vertical axis is in a zig-zag pattern:
 
 In the decoding graph, syndrome qubits correspond to vertices, and data qubits correspond to edges.
 The edges are partitioned based on their directions: north-south, east-west, and up-down.
-Edges along each dimension are stored in two-dimensional maps.
-To distinguish the indices with those of input and output qubits, we index these maps using the labels $$(s, t)$$.
+(North here actually means north-west.)
+Edges along each dimension are stored in two-dimensional maps;
+to distinguish the indices with those of input and output qubits, the edges use the labels $$(s, t)$$.
 For Pauli correction output purposes, we focus on the north-south and east-west directions.
-The north-south edges are stored as follows:
-![north-south](nw-st.png)
-Specifically, the north-south edges are further partitioned into four cases:
-* First column:
-* Middle odd column
-* Middle even column
-* Last column
-TODO describe
+Notice that there are only a total of $$d^2-d+1$$ corrections, meaning that some physical qubits will never report an error.
 
-TODO what about east-west?
+Concretely, the north-south edges are further partitioned into four cases:
+* First column (cyan): The boundary conditions are set up as `nexist_edge` and will never report an error.
+* Middle odd column (teal): These edges go between vertices $$(s-1, t-1)$$ and $$(s, t-1)$$.
+* Middle even column (purple): These edges go between vertices $$(s-1, t-1)$$ and $$(s, t)$$.
+* Last column (green): These edges extends southward from vertices $$(s-1, t-1)$$.
+These are summarized in the following figure:
+![north-south](ns-st.png)
 
-## TODO math
+On the other hand, the east-west edges are partitioned into five cases:
+* First column (green): Extends westwards from vertices $$(s-1, t)$$
+* Middle odd column (teal): Between vertices $$(s, t)$$ and $$(s-1, t)$$
+* Middle even column (purple): Between vertices $$(s, t-1)$$ and $$(s-1, t)$$.
+* Last column except last row (cyan): Will never report an error
+* Last column and final row (brown): Extends eastwards from $$(s, t-1)$$.
+These are summarized in the following figure:
+![east-west](ew-st.png)
+
+## Output coordinates
+
+Now we work out the final coordinate transform case-by-case.
+This connects the output grid to the edge indexing, then back to the input indexing.
+We will spell out all the details to check that everything matches in the implementation.
+We label data qubits using $$(x, y)$$ pairs.
+We choose $$x$$ as the downward direction to match the $$i$$-direction for the syndromes.
+![output axis](xy-axis.png)
+
+### North-South
+
+* First column has no edges.
+* For middle odd columns, the syndrome at $$(x, y)$$ is between $$(x - 1, \frac{y}{2})$$ to $$(x, \frac{y}{2})$$.
+  This gives $$(s, t)=(x, \frac{y}{2}+1)$$.
+* For middle even columns, the syndromes at $$(x, y)$$ is between $$(x, \lfloor\frac{y}{2}\rfloor - 1)$$ and $$(x + 1, \lfloor\frac{y}{2}\rfloor)$$.
+  This gives $$(s, t)=(x+1, \lfloor\frac{y}{2}\rfloor)$$
+* Last column extends from the syndromes at $$(x, w_z-1)$$. This gives $$(s, t)=(x+1, w_z)$$.
+
+### South-West
+
+* First column extends from the syndromes at $$(x, 0)$$. This gives $$(s, t)=(x+1, 0)$$.
+* Middle odd column is between $$(x, \lfloor\frac{y}{2}\rfloor)$$ and $$(x+1, \lfloor\frac{y}{2}\rfloor)$$.
+  This gives $$(s, t)=(x+1, \lfloor\frac{y}{2}\rfloor)$$
+* Middle even column is between $$(x, \frac{y}{2})$$ and $$(x+1, \frac{y}{2}-1)$$.
+  This gives $$(s, t)=(x+1, \frac{y}{2})$$.
+* Last column except last row will never report an error.
+* Final row in last column extends from the final syndrome $$(w_x - 1, w_z - 1)$$.
+  This gives $$(s, t)=(w_x - 1, w_z)$$.
