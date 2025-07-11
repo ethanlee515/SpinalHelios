@@ -31,7 +31,7 @@ Concretely, the north-south edges are further partitioned into four cases:
 * Middle even column (purple): These edges go between vertices $$(s-1, t-1)$$ and $$(s, t)$$.
 * Last column (green): These edges extends southward from vertices $$(s-1, t-1)$$.
 These are summarized in the following figure:
-![north-south](ns-st.png)
+![north-south](./img/ns-st.png)
 
 On the other hand, the east-west edges are partitioned into five cases:
 * First column (green): Extends westwards from vertices $$(s-1, t)$$
@@ -40,7 +40,7 @@ On the other hand, the east-west edges are partitioned into five cases:
 * Last column except last row (cyan): Will never report an error
 * Last column and final row (brown): Extends eastwards from $$(s, t-1)$$.
 These are summarized in the following figure:
-![east-west](ew-st.png)
+![east-west](./img/ew-st.png)
 
 ## Output coordinates
 
@@ -49,14 +49,14 @@ This connects the output grid to the edge indexing, then back to the input index
 We will spell out all the details to check that everything matches in the implementation.
 We label data qubits using $$(x, y)$$ pairs.
 We choose $$x$$ as the downward direction to match the $$i$$-direction for the syndromes.
-![output axis](xy-axis.png)
+![output axis](./img/xy-axis.png)
 
 ### North-South
 
 * First column has no edges.
 * For middle odd columns, the data at $$(x, y)$$ is between syndromes $$(x, \lfloor\frac{y}{2}\rfloor)$$ to $$(x + 1, \lfloor\frac{y}{2}\rfloor)$$.
   We have $$(s-1, t-1)=(x, \lfloor\frac{y}{2}\rfloor)$$; solving it gives $$(s, t)=(x + 1, \lfloor\frac{y}{2}\rfloor+1)$$.
-* For middle even columns, the data at $$(x, y)$$ is between syndromes $$(x, \frac{y}{2} - 1)$$ and $$(x + 1,\frac{y}{2})$$.
+* For middle even columns, the data at $$(x, y)$$ is between syndromes $$(x, \frac{y}{2} - 1)$$ and $$(x + 1, \frac{y}{2})$$.
   This gives $$(s, t)=(x+1, \frac{y}{2})$$
 * Last column extends from the syndromes at $$(x, w_z-1)$$. This gives $$(s, t)=(x+1, w_z)$$.
 
