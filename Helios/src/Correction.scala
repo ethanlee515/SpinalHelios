@@ -30,7 +30,7 @@ case class Correction(params: HeliosParams) extends Bundle {
         return False
       }
       if(y < code_distance - 1) {
-        return ns(k, x, y / 2 + 1)
+        return ns(k, x + 1, y / 2)
       }
       if(y == code_distance - 1) {
         return ns(k, x + 1, grid_width_z)
