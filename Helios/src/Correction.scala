@@ -23,50 +23,36 @@ case class Correction(params: HeliosParams) extends Bundle {
   def data(k: Int, x: Int, y: Int) : Bool = {
     /* ns */
     if(x % 2 == 0 && y % 2 == 1) {
-      val i = x + 1
-      val j = y / 2 + 1
-      return ns(k, i, j)
+      return ns(k, x, y / 2 + 1)
     }
     if(x % 2 == 1 && y % 2 == 0) {
       if(y == 0) {
         return False
       }
       if(y < code_distance - 1) {
-        val i = x
-        val j = y / 2 + 1
-        return ns(k, i, j)
+        return ns(k, x + 1, y / 2)
       }
       if(y == code_distance - 1) {
-        val i = x + 1
-        val j = grid_width_z
-        return ns(k, i, j)
+        return ns(k, x + 1, grid_width_z)
       }
     }
     /* ew */
     if(x % 2 == 1 && y % 2 == 1) {
-      val i = x + 1
-      val j = y / 2
-      return ew(k, i, j)
+      return ew(k, x + 1, y / 2)
     }
     if(x % 2 == 0 && y % 2 == 0) {
       if(y == 0) {
-        val i = x + 1
-        val j = 0
-        return ew(k, i, j)
+        return ew(k, x + 1, 0)
       }
       if(y > 0 && y < code_distance - 1) {
-        val i = x + 1
-        val j = y / 2
-        return ew(k, i, j)
+        return ew(k, x + 1, y / 2)
       }
       if(y == code_distance - 1) {
         if(x < code_distance - 1) {
           return False
         }
         if(x == code_distance - 1) {
-          val s = grid_width_x - 1
-          val t = grid_width_z
-          return ew(k, s, t)
+          return ew(k, grid_width_x - 1, grid_width_z)
         }
       }
     }
