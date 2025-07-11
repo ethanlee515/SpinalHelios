@@ -54,9 +54,9 @@ We choose $$x$$ as the downward direction to match the $$i$$-direction for the s
 ### North-South
 
 * First column has no edges.
-* For middle odd columns, the syndrome at $$(x, y)$$ is between $$(x - 1, \frac{y}{2})$$ to $$(x, \frac{y}{2})$$.
-  This gives $$(s, t)=(x, \frac{y}{2}+1)$$.
-* For middle even columns, the syndromes at $$(x, y)$$ is between $$(x, \lfloor\frac{y}{2}\rfloor - 1)$$ and $$(x + 1, \lfloor\frac{y}{2}\rfloor)$$.
+* For middle odd columns, the data at $$(x, y)$$ is between syndromes $$(x, \frac{y}{2})$$ to $$(x + 1, \frac{y}{2})$$.
+  This gives $$(s, t)=(x + 1, \frac{y}{2}+1)$$.
+* For middle even columns, the data at $$(x, y)$$ is between syndromes $$(x, \lfloor\frac{y}{2}\rfloor - 1)$$ and $$(x + 1, \lfloor\frac{y}{2}\rfloor)$$.
   This gives $$(s, t)=(x+1, \lfloor\frac{y}{2}\rfloor)$$
 * Last column extends from the syndromes at $$(x, w_z-1)$$. This gives $$(s, t)=(x+1, w_z)$$.
 

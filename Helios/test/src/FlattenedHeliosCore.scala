@@ -22,11 +22,33 @@ class FlattenedHelios(val params: HeliosParams) extends Component {
     core.meas_in.payload(i)(j) := mij
     mij
   }
-
   // flattening the correction output flow
   // apparently simPublic doesn't work on vec/bits...
   val output_valid = out Bool()
   output_valid := core.corrections.valid
+  val ns_indices = {
+    for(k <- 0 until grid_width_u;
+        i <- 1 until grid_width_x;
+        j <- 1 to grid_width_z) yield (k, i, j)
+  }
+  val ew_indices = {
+    val s1 = {
+      for(k <- 0 until grid_width_u;
+          i <- 1 until grid_width_x;
+          j <- 0 until grid_width_z) yield (k, i, j)
+    }
+    val s2 = {
+      val i = grid_width_x - 1
+      val j = grid_width_z
+      for(k <- 0 until grid_width_u) yield (k, i, j)
+    }
+    s1 ++ s2
+  }
+  val ud_indices = {
+    for(k <- 0 until grid_width_u;
+        i <- 0 until grid_width_x;
+        j <- 0 until grid_width_z) yield (k, i, j)
+  }
   val ns = ns_indices.map { case (k, i, j) =>
     val b = out Bool()
     b := core.corrections.payload.ns(k, i, j)

@@ -19,32 +19,12 @@ case class HeliosParams(
   val u_bit_width = log2Up(grid_width_u)
   val address_width = x_bit_width + z_bit_width + u_bit_width
   // max weights
-  val ns_indices = {
-    for(k <- 0 until grid_width_u;
-        i <- 1 until grid_width_x;
-        j <- 1 to grid_width_z) yield (k, i, j)
-  }
-  val ew_indices = {
-    val s1 = {
-      for(k <- 0 until grid_width_u;
-          i <- 1 until grid_width_x;
-          j <- 0 until grid_width_z) yield (k, i, j)
-    }
-    val s2 = {
-      val i = grid_width_x - 1
-      val j = grid_width_z
-      for(k <- 0 until grid_width_u) yield (k, i, j)
-    }
-    s1 ++ s2
-  }
-  val ud_indices = {
-    for(k <- 0 until grid_width_u;
-        i <- 0 until grid_width_x;
-        j <- 0 until grid_width_z) yield (k, i, j)
-  }
-  val max_weight_ns = ns_indices.map(weight_ns.tupled).max
-  val max_weight_ew = ew_indices.map(weight_ew.tupled).max
-  val max_weight_ud = ud_indices.map(weight_ud.tupled).max
+  val weights_ns = Seq.tabulate(grid_width_u, grid_width_x + 1, grid_width_z + 1)(weight_ns)
+  val max_weight_ns = weights_ns.flatten.flatten.max
+  val weights_ew = Seq.tabulate(grid_width_u, grid_width_x + 1, grid_width_z + 1)(weight_ew)
+  val max_weight_ew = weights_ew.flatten.flatten.max
+  val weights_ud = Seq.tabulate(grid_width_u + 1, grid_width_x, grid_width_z)(weight_ud)
+  val max_weight_ud = weights_ud.flatten.flatten.max
   val max_weight = List(max_weight_ns, max_weight_ew, max_weight_ud).max
 }
 

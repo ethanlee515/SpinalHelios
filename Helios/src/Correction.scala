@@ -23,14 +23,14 @@ case class Correction(params: HeliosParams) extends Bundle {
   def data(k: Int, x: Int, y: Int) : Bool = {
     /* ns */
     if(x % 2 == 0 && y % 2 == 1) {
-      return ns(k, x, y / 2 + 1)
+      return ns(k, x + 1, y / 2 + 1)
     }
     if(x % 2 == 1 && y % 2 == 0) {
       if(y == 0) {
         return False
       }
       if(y < code_distance - 1) {
-        return ns(k, x + 1, y / 2)
+        return ns(k, x, y / 2 + 1)
       }
       if(y == code_distance - 1) {
         return ns(k, x + 1, grid_width_z)
