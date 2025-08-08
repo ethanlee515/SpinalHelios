@@ -102,8 +102,8 @@ class CorrectionFlattener(params: HeliosParams) extends Component {
   flat_correction.valid := out_valid
   for(i <- 0 until code_distance;
       j <- 0 until code_distance) {
-    val v_ij = Vec.tabulate(grid_width_z) { k =>
-      layered_correction.data(k, i, j)
+    val v_ij = Vec.tabulate(grid_width_u) { k =>
+      layered_correction.payload.data(k, i, j)
     }
     out_payload(i)(j) := v_ij.xorR
   }
