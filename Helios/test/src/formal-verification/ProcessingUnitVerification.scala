@@ -54,7 +54,7 @@ class UnitEquivChecker extends Component {
   // outputs
   val meas_out_eq, neighbor_inc_eq, neighbor_err_eq, to_neighbor_eq, odd_eq, busy_eq = out Bool()
   // instantiate
-  val address = 0b01011010
+  val address = Integer.parseInt("01011010", 2)
   val reference = new BoxedUnit(address, params)
   val unit = new ProcessingUnit(address, params)
   // feeding inputs

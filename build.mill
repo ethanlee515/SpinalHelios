@@ -1,18 +1,19 @@
 package build
 import mill._, scalalib._
 
-object Helios extends ScalaModule {
-  def scalaVersion = "2.13.16"
-  def ivyDeps = Agg(
-    ivy"com.github.spinalhdl::spinalhdl-core:1.12.2",
-    ivy"com.github.spinalhdl::spinalhdl-lib:1.12.2"
+trait Helios extends CrossScalaModule {
+  override def mvnDeps = Seq(
+    mvn"com.github.spinalhdl::spinalhdl-core:1.14.0",
+    mvn"com.github.spinalhdl::spinalhdl-lib:1.14.0",
   )
 
-  def scalacPluginIvyDeps = Agg(ivy"com.github.spinalhdl::spinalhdl-idsl-plugin:1.12.2")
+  override def scalacPluginMvnDeps = Seq(mvn"com.github.spinalhdl::spinalhdl-idsl-plugin:1.14.0")
 
   object test extends ScalaTests {
-    def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.8.5")
+    def mvnDeps = Seq(mvn"com.lihaoyi::utest:0.8.5")
     def testFramework = "utest.runner.Framework"
     def testSandboxWorkingDir = false
   }
 }
+
+object Helios extends Cross[Helios]("2.12.18", "2.13.16")
